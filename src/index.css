@@ -1,0 +1,53 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --font-sans: 'Inter', system-ui, sans-serif;
+  }
+  
+  body {
+    @apply bg-slate-950 text-slate-200 antialiased min-h-screen selection:bg-blue-500/30 selection:text-white font-sans;
+    font-family: var(--font-sans);
+  }
+}
+
+/* Base custom utilities for Glassmorphism */
+@layer utilities {
+  .glass-panel {
+    @apply bg-slate-900/40 backdrop-blur-xl border border-slate-800 shadow-xl;
+  }
+  .glass-header {
+    @apply bg-slate-950/70 backdrop-blur-md border-b border-slate-800/80;
+  }
+  .radial-glow {
+    background: radial-gradient(circle at center, rgba(37, 99, 235, 0.15) 0%, transparent 60%);
+  }
+}
+
+/* Chrome, Safari, Edge, Opera */
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* Firefox */
+input[type=number] {
+  -moz-appearance: textfield;
+}
+
+@media print {
+  @page {
+    margin: 0.5cm;
+    size: A4 portrait;
+  }
+  body {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+    background-color: transparent !important;
+  }
+}
