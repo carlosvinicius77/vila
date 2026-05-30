@@ -5,8 +5,11 @@ import { toast, Toaster } from 'sonner';
 import { clsx } from 'clsx';
 import {
   LogOut, Delete, Check, X, Search,
-  ChefHat, Scale, Pencil, Trash2, ClipboardList
+  ChefHat, Scale, Pencil, Trash2, ClipboardList,
+  FileText, FileSpreadsheet, CheckCircle2
 } from 'lucide-react';
+import * as XLSX from 'xlsx';
+import { gerarNomeArquivo, exportarVR } from '../utils/exportTools';
 import { INITIAL_PRODUCTS } from '../initialData';
 
 const DEPT_CONFIG = {
@@ -387,46 +390,127 @@ export default function QuickEntry() {
 
       {/* ── ABA: HISTÓRICO ────────────────────────────────────────────── */}
       {tab === 'historico' && (
-        <div className="flex-1 overflow-y-auto px-4 py-3">
-          {sessionLog.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-full gap-3 text-slate-600">
-              <ClipboardList size={48} className="opacity-20" />
-              <p className="text-sm font-medium">Nenhum registro nesta sessão.</p>
-              <p className="text-xs text-slate-700">Pese um produto para aparecer aqui.</p>
-            </div>
-          ) : (
-            <div className="flex flex-col gap-2">
-              <p className="text-xs font-extrabold uppercase tracking-widest text-slate-500 mb-1">
-                {sessionLog.length} registro{sessionLog.length !== 1 ? 's' : ''} nesta sessão
-              </p>
-              {sessionLog.map((log, idx) => (
-                <div key={log.id} className="bg-slate-900 border border-slate-800 rounded-xl px-4 py-3 flex items-center gap-3">
-                  <div className="flex-1 min-w-0">
-                    <div className="font-bold text-white text-sm truncate">{log.itemNome}</div>
-                    <div className="text-[11px] text-slate-500 mt-0.5 flex items-center gap-1.5 flex-wrap">
-                      <span className={clsx('font-bold', log.mode === 'balanco' ? deptCfg.text : 'text-amber-400')}>
-                        {log.mode === 'balanco' ? `⚖️ ${log.location === 'loja' ? 'Loja' : 'Câmara'}` : '🍳 Cozinha'}
-                      </span>
-                      <span className="text-slate-600">·</span>
-                      <span>{log.time}</span>
-                      {log.formula && <span className="font-mono text-slate-600 truncate max-w-[100px]">{log.formula}</span>}
+        <div className="flex-1 flex flex-col overflow-hidden">
+
+          {/* Lista de registros */}
+          <div className="flex-1 overflow-y-auto px-4 py-3">
+            {sessionLog.length === 0 ? (
+              <div className="flex flex-col items-center justify-center h-full gap-3 text-slate-600">
+                <ClipboardList size={48} className="opacity-20" />
+                <p className="text-sm font-medium">Nenhum registro nesta sessão.</p>
+                <p className="text-xs text-slate-700">Pese um produto para aparecer aqui.</p>
+              </div>
+            ) : (
+              <div className="flex flex-col gap-2 pb-2">
+                <p className="text-xs font-extrabold uppercase tracking-widest text-slate-500 mb-1">
+                  {sessionLog.length} registro{sessionLog.length !== 1 ? 's' : ''} nesta sessão
+                </p>
+                {sessionLog.map((log, idx) => (
+                  <div key={log.id} className="bg-slate-900 border border-slate-800 rounded-xl px-4 py-3 flex items-center gap-3">
+                    <div className="flex-1 min-w-0">
+                      <div className="font-bold text-white text-sm truncate">{log.itemNome}</div>
+                      <div className="text-[11px] text-slate-500 mt-0.5 flex items-center gap-1.5 flex-wrap">
+                        <span className={clsx('font-bold', log.mode === 'balanco' ? deptCfg.text : 'text-amber-400')}>
+                          {log.mode === 'balanco' ? `⚖️ ${log.location === 'loja' ? 'Loja' : 'Câmara'}` : '🍳 Cozinha'}
+                        </span>
+                        <span className="text-slate-600">·</span>
+                        <span>{log.time}</span>
+                        {log.formula && <span className="font-mono text-slate-600 truncate max-w-[100px]">{log.formula}</span>}
+                      </div>
                     </div>
+                    <span className={clsx('text-base font-extrabold shrink-0', log.mode === 'balanco' ? deptCfg.text : 'text-amber-400')}>
+                      {log.kg.toFixed(3)}<span className="text-xs text-slate-500 ml-0.5">kg</span>
+                    </span>
+                    <button onClick={() => { setEditingLog({ index: idx, entry: log }); setEditFormula(log.formula); }}
+                      className="p-2 bg-slate-800 hover:bg-slate-700 rounded-lg text-slate-400 hover:text-white transition-colors shrink-0">
+                      <Pencil size={14} />
+                    </button>
+                    <button onClick={() => deleteLog(idx)}
+                      className="p-2 bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 rounded-lg text-red-400 hover:text-red-300 transition-colors shrink-0">
+                      <Trash2 size={14} />
+                    </button>
                   </div>
-                  <span className={clsx('text-base font-extrabold shrink-0', log.mode === 'balanco' ? deptCfg.text : 'text-amber-400')}>
-                    {log.kg.toFixed(3)}<span className="text-xs text-slate-500 ml-0.5">kg</span>
-                  </span>
-                  {/* Editar */}
-                  <button onClick={() => { setEditingLog({ index: idx, entry: log }); setEditFormula(log.formula); }}
-                    className="p-2 bg-slate-800 hover:bg-slate-700 rounded-lg text-slate-400 hover:text-white transition-colors shrink-0">
-                    <Pencil size={14} />
-                  </button>
-                  {/* Apagar */}
-                  <button onClick={() => deleteLog(idx)}
-                    className="p-2 bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 rounded-lg text-red-400 hover:text-red-300 transition-colors shrink-0">
-                    <Trash2 size={14} />
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* ── Botões de Finalizar ─────────────────────────────────── */}
+          {sessionLog.length > 0 && (
+            <div className="px-4 pb-4 pt-2 border-t border-slate-800 bg-slate-950 shrink-0 flex flex-col gap-2">
+              <p className="text-xs font-extrabold uppercase tracking-widest text-slate-500 mb-1">Finalizar sessão</p>
+
+              {/* Finalizar Balanço */}
+              {sessionLog.some(l => l.mode === 'balanco') && (
+                <div className={clsx('rounded-2xl border p-3 flex flex-col gap-2', deptCfg.bg, deptCfg.border)}>
+                  <div className="flex items-center gap-2">
+                    <CheckCircle2 size={16} className={deptCfg.text} />
+                    <span className={clsx('text-sm font-extrabold', deptCfg.text)}>Finalizar Balanço</span>
+                    <span className="text-xs text-slate-500 ml-auto">
+                      {sessionLog.filter(l => l.mode === 'balanco').length} itens
+                    </span>
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => {
+                        exportarVR(items, new Date().toLocaleDateString('pt-BR'));
+                        toast.success('TXT VR gerado!');
+                      }}
+                      className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl bg-slate-900 border border-slate-700 hover:border-blue-500 text-slate-300 hover:text-white text-xs font-bold transition-all active:scale-95"
+                    >
+                      <FileText size={14} className="text-blue-400" /> TXT VR
+                    </button>
+                    <button
+                      onClick={() => {
+                        const ws = XLSX.utils.json_to_sheet(
+                          sessionLog.filter(l => l.mode === 'balanco').map(l => ({
+                            Código: l.itemId, Produto: l.itemNome,
+                            Local: l.location === 'loja' ? 'Loja' : 'Câmara',
+                            'Peso (kg)': l.kg.toFixed(3), Fórmula: l.formula, Hora: l.time
+                          }))
+                        );
+                        const wb = XLSX.utils.book_new();
+                        XLSX.utils.book_append_sheet(wb, ws, 'Balanço');
+                        XLSX.writeFile(wb, `${gerarNomeArquivo('balanco', new Date().toLocaleDateString('pt-BR'))}.xlsx`);
+                        toast.success('Excel gerado!');
+                      }}
+                      className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl bg-slate-900 border border-slate-700 hover:border-emerald-500 text-slate-300 hover:text-white text-xs font-bold transition-all active:scale-95"
+                    >
+                      <FileSpreadsheet size={14} className="text-emerald-400" /> Excel
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Finalizar Cozinha */}
+              {sessionLog.some(l => l.mode === 'cozinha') && (
+                <div className="rounded-2xl border border-amber-500/30 bg-amber-600/10 p-3 flex flex-col gap-2">
+                  <div className="flex items-center gap-2">
+                    <ChefHat size={16} className="text-amber-400" />
+                    <span className="text-sm font-extrabold text-amber-400">Finalizar Cozinha</span>
+                    <span className="text-xs text-slate-500 ml-auto">
+                      {sessionLog.filter(l => l.mode === 'cozinha').length} itens
+                    </span>
+                  </div>
+                  <button
+                    onClick={() => {
+                      const ws = XLSX.utils.json_to_sheet(
+                        sessionLog.filter(l => l.mode === 'cozinha').map(l => ({
+                          Código: l.itemId, Produto: l.itemNome,
+                          'Peso (kg)': l.kg.toFixed(3), Fórmula: l.formula, Hora: l.time
+                        }))
+                      );
+                      const wb = XLSX.utils.book_new();
+                      XLSX.utils.book_append_sheet(wb, ws, 'Cozinha');
+                      XLSX.writeFile(wb, `${gerarNomeArquivo('cozinha', new Date().toLocaleDateString('pt-BR'))}.xlsx`);
+                      toast.success('Relatório Cozinha gerado!');
+                    }}
+                    className="flex items-center justify-center gap-1.5 py-2.5 rounded-xl bg-slate-900 border border-slate-700 hover:border-amber-500 text-slate-300 hover:text-amber-300 text-xs font-bold transition-all active:scale-95"
+                  >
+                    <FileSpreadsheet size={14} className="text-amber-400" /> Exportar Excel Cozinha
                   </button>
                 </div>
-              ))}
+              )}
             </div>
           )}
         </div>
