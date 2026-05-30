@@ -68,13 +68,20 @@ export function HistoryPage({ history, onDeleteRecord, setPrintingRecord }) {
                 onClick={() => setExpandedId(isExpanded ? null : record.date)}
                 className="w-full flex items-center justify-between p-5 hover:bg-zinc-800/80 transition-colors text-left"
               >
-                <div className="flex flex-col gap-1">
-                  <div className="flex items-center gap-2 text-blue-400 font-bold text-lg">
-                    <CalendarDays size={20} />
-                    <span>Balanço - {record.date.split(" ")[0]}</span>
+                <div className="flex flex-col gap-1.5">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <div className="flex items-center gap-2 text-blue-400 font-bold text-lg">
+                      <CalendarDays size={20} />
+                      <span>{record.origin === 'cozinha' ? 'Cozinha' : 'Balanço'} — {record.date.split(" ")[0]}</span>
+                    </div>
+                    {record.origin === 'cozinha'
+                      ? <span className="text-[10px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-full bg-amber-600/15 text-amber-400 border border-amber-500/30">🍳 Cozinha</span>
+                      : <span className="text-[10px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-full bg-blue-600/15 text-blue-400 border border-blue-500/30">⚖️ Balanço</span>
+                    }
+                    {record.store && <span className="text-[10px] text-zinc-600 font-medium">{record.store}</span>}
                   </div>
                   <span className="text-sm text-zinc-500 font-medium">
-                    {validItems.length} itens • Peso Total: <span className="text-slate-300 font-bold">{totalAccumulated.toFixed(3)}kg</span>
+                    {validItems.length} itens • {record.date.split(" ")[1]} • Peso Total: <span className="text-slate-300 font-bold">{totalAccumulated.toFixed(3)}kg</span>
                   </span>
                 </div>
                 <div className="bg-zinc-950 p-2 rounded-full border border-zinc-800">

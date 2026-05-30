@@ -507,6 +507,20 @@ export default function QuickEntry() {
                 </button>
                 <button
                   onClick={() => {
+                    // Salva no histórico do admin
+                    const dateStr = new Date().toLocaleDateString('pt-BR') + ' ' + new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+                    const store = localStorage.getItem('@acougue/currentStore') || 'Loja';
+                    const savedItems = JSON.parse(localStorage.getItem('@acougue/items') || '[]');
+                    const newRecord = {
+                      date: dateStr,
+                      items: savedItems.filter(it => !it.dept || it.dept === dept),
+                      store,
+                      dept,
+                      origin: confirmModal === 'cozinha' ? 'cozinha' : 'balanco',
+                    };
+                    const hist = JSON.parse(localStorage.getItem('@acougue/history') || '[]');
+                    localStorage.setItem('@acougue/history', JSON.stringify([newRecord, ...hist]));
+
                     setConfirmModal(null);
                     setFinalizado(confirmModal);
                     setTimeout(() => { setFinalizado(null); setSessionLog([]); setTab('teclado'); }, 2500);
