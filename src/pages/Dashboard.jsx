@@ -745,25 +745,6 @@ export default function Dashboard() {
          <div className="border-t border-black w-64 mt-20 pt-2 text-center text-black font-bold uppercase">Assinatura do Responsável</div>
       </div>
 
-      {activeTab === 'home' && (
-        <div className="fixed bottom-24 left-4 right-4 max-w-2xl mx-auto flex gap-3 z-20 print:hidden animate-in slide-in-from-bottom-5">
-          <button
-            onClick={handleFinalizarSemana}
-            className="flex-1 bg-slate-800/90 hover:bg-slate-700 border border-slate-700/80 text-white rounded-xl py-4 font-semibold backdrop-blur-md active:bg-slate-900 transition flex items-center justify-center gap-2 shadow-lg"
-          >
-            <Save size={18} />
-            <span className="hidden sm:inline">Finalizar</span>
-            <span className="sm:hidden">Gravar</span>
-          </button>
-          <button
-            onClick={() => setIsExportDialogOpen(true)}
-            className={clsx("flex-[2] text-white rounded-xl py-4 font-semibold backdrop-blur-md transition flex items-center justify-center gap-2 shadow-lg border", currentDeptConfig.btnClass)}
-          >
-            <Table2 size={18} />
-            <span>Gerar TXT/Excel</span>
-          </button>
-        </div>
-      )}
 
       <nav className="fixed bottom-0 left-0 right-0 h-[76px] bg-slate-950/92 backdrop-blur-xl border-t border-slate-800/80 flex justify-around items-center z-30 print:hidden pb-safe shadow-[0_-10px_40px_rgba(0,0,0,0.5)]">
         {/* Balanço */}
