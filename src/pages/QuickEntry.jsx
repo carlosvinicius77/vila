@@ -365,6 +365,13 @@ export default function QuickEntry() {
                   <button onClick={() => pressKey('+')} className={clsx('font-black text-3xl rounded-2xl border active:scale-95 transition-all', cfg.bg, cfg.border, cfg.text)}>+</button>
                   <button onClick={() => pressKey('0')} className="bg-slate-800 hover:bg-slate-700 active:scale-95 text-white text-3xl font-bold rounded-2xl border border-slate-700 transition-all">0</button>
                   <button onClick={() => pressKey('.')} className="bg-slate-800 hover:bg-slate-700 active:scale-95 text-white text-3xl font-bold rounded-2xl border border-slate-700 transition-all">.</button>
+                  {/* Linha extra: apagar e limpar */}
+                  <button onClick={() => pressKey('DEL')} className="bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-300 rounded-2xl border border-slate-700 transition-all flex items-center justify-center">
+                    <Delete size={24} />
+                  </button>
+                  <button onClick={() => pressKey('C')} className="col-span-2 bg-red-500/10 border border-red-500/30 text-red-400 font-bold rounded-2xl text-sm active:scale-95 transition-all">
+                    Limpar tudo
+                  </button>
                 </>
               )}
               <button onClick={() => pressKey('OK')}
