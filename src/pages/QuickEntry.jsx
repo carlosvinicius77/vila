@@ -44,7 +44,6 @@ export default function QuickEntry() {
 
   // Busca por nome (lupa)
   const [showSearch, setShowSearch] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
 
   // Histórico da sessão
   const [sessionLog, setSessionLog] = useState([]);
@@ -61,10 +60,6 @@ export default function QuickEntry() {
     if (saved) { try { setItems(JSON.parse(saved)); } catch { setItems(INITIAL_PRODUCTS); } }
     else setItems(INITIAL_PRODUCTS);
   }, []);
-
-  const searchResults = searchQuery.trim().length >= 1
-    ? items.filter(it => it.nome.toLowerCase().includes(searchQuery.toLowerCase()) || it.id.toString().includes(searchQuery))
-    : [];
 
   // ── Selecionar produto (por código ou pela busca) ──────────────────────────
   const selectProduct = (item) => {
@@ -199,7 +194,7 @@ export default function QuickEntry() {
         <div className="flex-1" />
 
         {/* Lupa — busca por nome */}
-        <button onClick={() => { setShowSearch(p => !p); setSearchQuery(''); setTab('teclado'); }}
+        <button onClick={() => { setShowSearch(p => !p); setTab('teclado'); }}
           className="p-2 text-slate-400 hover:text-white transition-colors">
           <Search size={19} />
         </button>
@@ -238,40 +233,43 @@ export default function QuickEntry() {
         </button>
       </div>
 
-      {/* ── Busca por nome (dropdown) ─────────────────────────────────── */}
+      {/* ── Busca por nome (modal full-screen, sem teclado do celular) ── */}
       <AnimatePresence>
         {showSearch && (
-          <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }}
-            className="overflow-hidden border-b border-slate-800 bg-slate-900 shrink-0 z-10">
-            <div className="p-3 flex flex-col gap-2">
-              <div className="relative">
-                <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
-                <input autoFocus value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
-                  placeholder="Nome do produto..."
-                  className="w-full pl-9 pr-4 py-3 bg-slate-800 border border-slate-700 rounded-xl text-white text-sm focus:outline-none focus:border-blue-500 placeholder:text-slate-600" />
-                <button onClick={() => setShowSearch(false)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white">
-                  <X size={16} />
-                </button>
+          <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }}
+            className="fixed inset-0 z-40 bg-slate-950 flex flex-col">
+            {/* Header do modal de busca */}
+            <div className="flex items-center justify-between px-4 py-3 border-b border-slate-800 bg-slate-900 shrink-0">
+              <div className="flex items-center gap-2">
+                <Search size={16} className={cfg.text} />
+                <span className="font-extrabold text-sm text-white">Selecionar Produto</span>
               </div>
-              {searchResults.length > 0 && (
-                <div className="flex flex-col gap-1 max-h-48 overflow-y-auto">
-                  {searchResults.map(item => (
-                    <button key={item.id} onClick={() => selectProduct(item)}
-                      className="flex items-center justify-between px-3 py-3 bg-slate-800/60 hover:bg-slate-700/60 rounded-xl border border-slate-700/50 text-left active:scale-[0.98] transition-all">
-                      <div>
-                        <span className="font-bold text-white text-sm">{item.nome}</span>
-                        <span className="text-[10px] text-slate-500 font-mono ml-2">Cód. {item.id}</span>
-                      </div>
-                      <Check size={14} className={clsx(
-                        (item.estoque_loja || 0) + (item.estoque_camara || 0) > 0 ? cfg.text : 'text-slate-700'
-                      )} />
-                    </button>
-                  ))}
-                </div>
-              )}
-              {searchQuery.trim() && searchResults.length === 0 && (
-                <p className="text-xs text-slate-600 text-center py-2">Nenhum produto encontrado.</p>
-              )}
+              <button onClick={() => setShowSearch(false)} className="p-2 text-slate-500 hover:text-white">
+                <X size={20} />
+              </button>
+            </div>
+            {/* Lista de todos os produtos — scroll e toque */}
+            <div className="flex-1 overflow-y-auto px-4 py-3 flex flex-col gap-1.5">
+              {items.map(item => {
+                const pesado = (item.estoque_loja || 0) + (item.estoque_camara || 0) > 0;
+                return (
+                  <button key={item.id} onClick={() => selectProduct(item)}
+                    className={clsx('flex items-center justify-between px-4 py-3.5 rounded-xl border text-left active:scale-[0.98] transition-all',
+                      pesado ? `${cfg.bg} ${cfg.border}` : 'bg-slate-900 border-slate-800 hover:border-slate-600'
+                    )}>
+                    <div className="flex items-center gap-3">
+                      <div className={clsx('w-9 h-9 rounded-lg flex items-center justify-center text-xs font-black shrink-0',
+                        pesado ? `${cfg.bg} ${cfg.text}` : 'bg-slate-800 text-slate-400'
+                      )}>{item.id}</div>
+                      <span className="font-bold text-white text-sm">{item.nome}</span>
+                    </div>
+                    {pesado
+                      ? <span className={clsx('text-sm font-extrabold shrink-0', cfg.text)}>{((item.estoque_loja||0)+(item.estoque_camara||0)).toFixed(3)}kg</span>
+                      : <span className="text-xs text-slate-600 font-mono shrink-0">0.000kg</span>
+                    }
+                  </button>
+                );
+              })}
             </div>
           </motion.div>
         )}
