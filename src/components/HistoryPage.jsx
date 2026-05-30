@@ -156,8 +156,8 @@ export function HistoryPage({ history, onDeleteRecord, setPrintingRecord }) {
                               {pesado ? (
                                 <div className="flex items-center gap-3 shrink-0 text-right">
                                   <div className="text-xs text-zinc-500">
-                                    <div>L: <span className="text-zinc-300 font-mono">{lojaKg.toFixed(3)}</span></div>
-                                    <div>C: <span className="text-zinc-300 font-mono">{camaraKg.toFixed(3)}</span></div>
+                                    <div>Loja: <span className="text-zinc-300 font-mono">{lojaKg.toFixed(3)}</span></div>
+                                    <div>Câmara: <span className="text-zinc-300 font-mono">{camaraKg.toFixed(3)}</span></div>
                                   </div>
                                   <span className={clsx('text-base font-extrabold font-mono', deptColor.text)}>
                                     {totalItem.toFixed(3)}<span className="text-xs text-zinc-500 ml-0.5">kg</span>
