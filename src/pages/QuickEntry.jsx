@@ -1,9 +1,9 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast, Toaster } from 'sonner';
 import { clsx } from 'clsx';
-import { LogOut, Delete, Check, X } from 'lucide-react';
+import { LogOut, Delete, Check, X, Search, ChefHat, Scale, Pencil, ClipboardList } from 'lucide-react';
 import { INITIAL_PRODUCTS } from '../initialData';
 
 const DEPT_CONFIG = {
@@ -33,8 +33,17 @@ export default function QuickEntry() {
   const [foundProduct, setFoundProduct] = useState(null);
   const [formula, setFormula] = useState('');
   const [location, setLocation] = useState('loja');
+  const [mode, setMode] = useState('balanco'); // 'balanco' | 'cozinha'
+
+  // Lista da sessão — registros feitos nesta sessão para editar se errar
+  const [sessionLog, setSessionLog] = useState([]);
+  const [showLog, setShowLog] = useState(false);
+  // Edição de um registro da lista
+  const [editingLog, setEditingLog] = useState(null); // { index, entry }
+  const [editFormula, setEditFormula] = useState('');
 
   const total = computeTotal(formula);
+  const editTotal = computeTotal(editFormula);
 
   useEffect(() => {
     const saved = localStorage.getItem('@acougue/items');
@@ -85,11 +94,34 @@ export default function QuickEntry() {
     if (total > 500) {
       if (!window.confirm(`Peso ${total.toFixed(3)}kg parece alto. Confirmar?`)) return;
     }
-    const field = location === 'loja' ? 'estoque_loja' : 'estoque_camara';
-    const fField = location === 'loja' ? 'formula_loja' : 'formula_camara';
-    const updated = items.map(it => it.id === foundProduct.id ? { ...it, [field]: total, [fField]: formula } : it);
-    setItems(updated);
-    localStorage.setItem('@acougue/items', JSON.stringify(updated));
+
+    let updatedItems = items;
+
+    if (mode === 'balanco') {
+      const field = location === 'loja' ? 'estoque_loja' : 'estoque_camara';
+      const fField = location === 'loja' ? 'formula_loja' : 'formula_camara';
+      updatedItems = items.map(it => it.id === foundProduct.id ? { ...it, [field]: total, [fField]: formula } : it);
+      setItems(updatedItems);
+      localStorage.setItem('@acougue/items', JSON.stringify(updatedItems));
+    } else {
+      // cozinha → salva em transferências
+      const list = JSON.parse(localStorage.getItem('@acougue/transferencias') || '[]');
+      list.push({ id: Date.now(), dept, itemId: foundProduct.id, itemNome: foundProduct.nome, kg: total, formula, destino: '🍳 Cozinha', date: new Date().toLocaleString('pt-BR'), timestamp: Date.now() });
+      localStorage.setItem('@acougue/transferencias', JSON.stringify(list));
+    }
+
+    const logEntry = {
+      id: Date.now(),
+      itemId: foundProduct.id,
+      itemNome: foundProduct.nome,
+      kg: total,
+      formula,
+      mode,
+      location: mode === 'balanco' ? location : null,
+      time: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
+    };
+    setSessionLog(p => [logEntry, ...p]);
+
     toast.success(`${foundProduct.nome} — ${total.toFixed(3)}kg ✓`);
     setPhase('done');
     setTimeout(() => {
@@ -100,16 +132,78 @@ export default function QuickEntry() {
     }, 1200);
   };
 
+  // Salva edição de um registro da lista
+  const saveEdit = () => {
+    if (editTotal <= 0) { toast.error('Peso inválido'); return; }
+    const entry = editingLog.entry;
+
+    if (entry.mode === 'balanco') {
+      const field = entry.location === 'loja' ? 'estoque_loja' : 'estoque_camara';
+      const fField = entry.location === 'loja' ? 'formula_loja' : 'formula_camara';
+      const updated = items.map(it => it.id === entry.itemId ? { ...it, [field]: editTotal, [fField]: editFormula } : it);
+      setItems(updated);
+      localStorage.setItem('@acougue/items', JSON.stringify(updated));
+    } else {
+      const list = JSON.parse(localStorage.getItem('@acougue/transferencias') || '[]');
+      const upd = list.map(t => t.id === entry.id ? { ...t, kg: editTotal, formula: editFormula } : t);
+      localStorage.setItem('@acougue/transferencias', JSON.stringify(upd));
+    }
+
+    setSessionLog(p => p.map((e, i) => i === editingLog.index ? { ...e, kg: editTotal, formula: editFormula } : e));
+    toast.success('Registro atualizado ✓');
+    setEditingLog(null);
+    setEditFormula('');
+  };
+
   return (
     <div className="min-h-screen bg-slate-950 flex flex-col select-none">
       <Toaster position="top-center" richColors theme="dark" />
 
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-slate-800 bg-slate-900/95">
-        <div className="flex items-center gap-2.5">
-          <span className="text-xl">{cfg.emoji}</span>
-          <span className={clsx('font-extrabold text-base', cfg.text)}>{cfg.label}</span>
+      <div className="flex items-center gap-2 px-3 py-2.5 border-b border-slate-800 bg-slate-900/95">
+        {/* Logo / setor */}
+        <div className="flex items-center gap-2 mr-1">
+          <span className="text-lg">{cfg.emoji}</span>
+          <span className={clsx('font-extrabold text-sm', cfg.text)}>{cfg.label}</span>
         </div>
+
+        {/* Spacer */}
+        <div className="flex-1" />
+
+        {/* Lupa — abre lista da sessão */}
+        <button
+          onClick={() => setShowLog(p => !p)}
+          className="relative p-2 text-slate-400 hover:text-white transition-colors"
+        >
+          <Search size={19} />
+          {sessionLog.length > 0 && (
+            <span className="absolute top-1 right-1 w-3.5 h-3.5 bg-blue-500 rounded-full text-[8px] font-black text-white flex items-center justify-center leading-none">
+              {sessionLog.length > 9 ? '9+' : sessionLog.length}
+            </span>
+          )}
+        </button>
+
+        {/* Balanço */}
+        <button
+          onClick={() => setMode('balanco')}
+          className={clsx('flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-extrabold transition-all',
+            mode === 'balanco' ? `${cfg.btn} text-white shadow-lg` : 'bg-slate-800 text-slate-400 hover:text-slate-200'
+          )}
+        >
+          <Scale size={13} /> Balanço
+        </button>
+
+        {/* Cozinha */}
+        <button
+          onClick={() => setMode('cozinha')}
+          className={clsx('flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-extrabold transition-all',
+            mode === 'cozinha' ? 'bg-amber-600 hover:bg-amber-500 text-white shadow-lg' : 'bg-slate-800 text-slate-400 hover:text-slate-200'
+          )}
+        >
+          <ChefHat size={13} /> Cozinha
+        </button>
+
+        {/* Sair */}
         <button
           onClick={() => { localStorage.removeItem('@acougue/isAuthenticated'); localStorage.removeItem('@acougue/role'); navigate('/', { replace: true }); }}
           className="p-2 text-slate-500 hover:text-red-400 transition-colors"
@@ -117,6 +211,109 @@ export default function QuickEntry() {
           <LogOut size={19} />
         </button>
       </div>
+
+      {/* Lista da sessão (dropdown) */}
+      <AnimatePresence>
+        {showLog && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }}
+            className="overflow-hidden border-b border-slate-800 bg-slate-900/90"
+          >
+            <div className="p-3">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-extrabold uppercase tracking-widest text-slate-400 flex items-center gap-1.5">
+                  <ClipboardList size={13} /> Pesado nesta sessão
+                </span>
+                <button onClick={() => setShowLog(false)}><X size={15} className="text-slate-500" /></button>
+              </div>
+
+              {sessionLog.length === 0 ? (
+                <p className="text-xs text-slate-600 text-center py-2">Nenhum registro ainda.</p>
+              ) : (
+                <div className="flex flex-col gap-1.5 max-h-52 overflow-y-auto">
+                  {sessionLog.map((log, idx) => (
+                    <div key={log.id} className="flex items-center justify-between bg-slate-800/60 rounded-xl px-3 py-2.5 border border-slate-700/50 gap-2">
+                      <div className="flex-1 min-w-0">
+                        <div className="font-bold text-white text-sm truncate">{log.itemNome}</div>
+                        <div className="text-[10px] text-slate-500 mt-0.5">
+                          {log.mode === 'balanco' ? `⚖️ ${log.location === 'loja' ? 'Loja' : 'Câmara'}` : '🍳 Cozinha'}
+                          {' · '}{log.time}
+                          {log.formula && <span className="font-mono ml-1 text-slate-600">({log.formula})</span>}
+                        </div>
+                      </div>
+                      <span className={clsx('text-sm font-extrabold shrink-0', log.mode === 'balanco' ? cfg.text : 'text-amber-400')}>
+                        {log.kg.toFixed(3)}<span className="text-xs text-slate-500 ml-0.5">kg</span>
+                      </span>
+                      {/* Botão editar */}
+                      <button
+                        onClick={() => { setEditingLog({ index: idx, entry: log }); setEditFormula(log.formula); setShowLog(false); }}
+                        className="p-1.5 bg-slate-700 hover:bg-slate-600 rounded-lg text-slate-300 transition-colors shrink-0"
+                      >
+                        <Pencil size={13} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Modal de edição de registro */}
+      <AnimatePresence>
+        {editingLog && (
+          <motion.div
+            initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }}
+            transition={{ type: 'spring', damping: 28, stiffness: 300 }}
+            className="fixed inset-0 z-50 bg-slate-950 flex flex-col"
+          >
+            <div className="flex items-center justify-between px-4 py-4 border-b border-slate-800">
+              <div>
+                <div className="text-xs text-slate-500 font-bold uppercase tracking-widest">Editando registro</div>
+                <div className={clsx('font-extrabold text-lg', cfg.text)}>{editingLog.entry.itemNome}</div>
+              </div>
+              <button onClick={() => { setEditingLog(null); setEditFormula(''); }} className="p-2 text-slate-500 hover:text-white">
+                <X size={22} />
+              </button>
+            </div>
+
+            <div className="flex-1 px-4 py-4 flex flex-col gap-4">
+              {/* Display */}
+              <div className="bg-slate-900 border border-slate-800 rounded-2xl px-5 py-4">
+                <div className="text-xs font-black uppercase tracking-widest text-slate-500 mb-1">Novo peso</div>
+                <div className="font-mono text-slate-400 text-sm text-right">{editFormula || '—'}</div>
+                <div className="flex items-baseline justify-end gap-2 mt-1">
+                  <span className={clsx('text-5xl font-black tracking-tighter', editingLog.entry.mode === 'balanco' ? cfg.text : 'text-amber-400')}>{editTotal.toFixed(3)}</span>
+                  <span className="text-xl font-bold text-slate-500">kg</span>
+                </div>
+              </div>
+
+              {/* Teclado edição */}
+              <div className="grid grid-cols-3 gap-3 flex-1">
+                {[1,2,3,4,5,6,7,8,9].map(n => (
+                  <button key={n} onClick={() => setEditFormula(p => p + n)}
+                    className="bg-slate-800 hover:bg-slate-700 active:scale-95 text-white text-3xl font-bold rounded-2xl py-5 border border-slate-700 transition-all">
+                    {n}
+                  </button>
+                ))}
+                <button onClick={() => setEditFormula(p => p + '+')}
+                  className={clsx('font-black text-3xl rounded-2xl py-5 border transition-all active:scale-95', cfg.bg, cfg.border, cfg.text)}>+</button>
+                <button onClick={() => setEditFormula(p => p + '0')}
+                  className="bg-slate-800 hover:bg-slate-700 active:scale-95 text-white text-3xl font-bold rounded-2xl py-5 border border-slate-700 transition-all">0</button>
+                <button onClick={() => setEditFormula(p => p.slice(0, -1))}
+                  className="bg-slate-800 active:scale-95 text-slate-300 rounded-2xl py-5 flex items-center justify-center border border-slate-700 transition-all"><Delete size={22} /></button>
+                <button onClick={saveEdit}
+                  className={clsx('col-span-3 py-5 rounded-2xl font-extrabold text-white text-xl flex items-center justify-center gap-3 shadow-lg active:scale-[0.98]',
+                    editingLog.entry.mode === 'balanco' ? cfg.btn : 'bg-amber-600 hover:bg-amber-500'
+                  )}>
+                  <Check size={22} strokeWidth={3} /> Salvar Correção
+                </button>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Área de display */}
       <div className="flex flex-col flex-1 px-4 pt-5 pb-2 gap-4">
@@ -235,10 +432,13 @@ export default function QuickEntry() {
             {/* Botão OK / Confirmar — ocupa linha inteira */}
             <button
               onClick={() => pressKey('OK')}
-              className={clsx('col-span-3 py-5 rounded-2xl font-extrabold text-white text-xl flex items-center justify-center gap-3 shadow-lg transition-all active:scale-[0.98]', cfg.btn)}
+              className={clsx('col-span-3 py-5 rounded-2xl font-extrabold text-white text-xl flex items-center justify-center gap-3 shadow-lg transition-all active:scale-[0.98]',
+                phase === 'weight' && mode === 'cozinha' ? 'bg-amber-600 hover:bg-amber-500' : cfg.btn
+              )}
             >
-              {phase === 'code'   && <><Search16 /> Buscar Produto</>}
-              {phase === 'weight' && <><Check size={22} strokeWidth={3} /> Confirmar Pesagem</>}
+              {phase === 'code'   && <><Search size={20} /> Buscar Produto</>}
+              {phase === 'weight' && mode === 'balanco'  && <><Check size={22} strokeWidth={3} /> Confirmar Pesagem</>}
+              {phase === 'weight' && mode === 'cozinha'  && <><ChefHat size={20} /> Confirmar Cozinha</>}
             </button>
           </div>
         )}
@@ -247,10 +447,3 @@ export default function QuickEntry() {
   );
 }
 
-function Search16() {
-  return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-      <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
-    </svg>
-  );
-}
