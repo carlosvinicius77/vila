@@ -588,87 +588,78 @@ export default function Dashboard() {
          )}
          
          {activeTab === 'home' && (
-            <div className="flex flex-col gap-3 print:gap-0 animate-in fade-in zoom-in-95 duration-300">
+            <div className="flex flex-col gap-0 animate-in fade-in zoom-in-95 duration-300">
                {currentDeptConfig.categories.map(cat => {
                   const catItems = filteredItems.filter(it => (it.categoria || '').toUpperCase() === cat.id);
                   if (catItems.length === 0 && searchQuery) return null;
-
-                  const isOpen = expandedCategory === cat.id;
                   const itemsContados = catItems.filter(it => (it.estoque_loja || 0) + (it.estoque_camara || 0) > 0).length;
-                  const totalItems = catItems.length;
-                  
+
                   return (
-                    <div key={cat.id} className="glass-panel overflow-hidden print:border-slate-300 print:bg-white print:text-black mb-3 rounded-2xl border-slate-800/80">
-                       <button 
-                         onClick={() => setExpandedCategory(isOpen ? null : cat.id)}
-                         className="w-full flex items-center justify-between p-4 bg-slate-900/60 hover:bg-slate-800/80 transition-colors print:bg-gray-100 text-left"
-                         style={{ minHeight: '48px' }}
-                       >
-                          <div className="flex items-center gap-3 flex-1 min-w-0 pr-3">
-                             <div className="shrink-0 pt-0.5">
-                               <cat.icon className={currentDeptConfig.accentClass} size={24} />
-                             </div>
-                             <h2 className="text-base sm:text-xl font-bold text-white uppercase tracking-wide flex flex-row flex-wrap items-center gap-x-2 gap-y-1 leading-tight">
-                               <div className="flex flex-row items-center gap-2">
-                                 <span>{cat.emoji}</span> 
-                                 <span className="break-words line-clamp-2 md:line-clamp-none">{cat.title}</span>
-                               </div>
-                               <span className="text-sm text-slate-400 font-medium whitespace-nowrap bg-slate-800/80 px-2 py-0.5 rounded-md">({itemsContados}/{totalItems})</span>
-                             </h2>
-                          </div>
-                          <div className="shrink-0 pl-1">
-                             <motion.div animate={{ rotate: isOpen ? 180 : 0 }} transition={{ duration: 0.3 }}>
-                               <ChevronDown className="text-slate-400" />
-                             </motion.div>
-                          </div>
-                       </button>
-                       
-                       <AnimatePresence initial={false}>
-                         {isOpen && (
-                           <motion.div
-                             key="content"
-                             initial="collapsed"
-                             animate="open"
-                             exit="collapsed"
-                             variants={{
-                               open: { opacity: 1, height: "auto" },
-                               collapsed: { opacity: 0, height: 0 }
-                             }}
-                             transition={{ duration: 0.3, ease: [0.04, 0.62, 0.23, 0.98] }}
-                           >
-                               <div className="p-3 flex flex-col gap-3 bg-slate-950/40 border-t border-slate-800/50">
-                                 {catItems.map((item) => (
-                                   <ProductCard 
-                                     key={item.id} 
-                                     item={item} 
-                                     updateItem={updateItem} 
-                                     updateItemFields={updateItemFields}
-                                     onEdit={(it) => { setEditingItem(it); setIsProductModalOpen(true); }}
-                                     onDelete={handleDeleteProduct}
-                                   />
-                                 ))}
-                                 
-                                 {catItems.length === 0 && (
-                                   <div className="text-center py-4 text-slate-500 font-medium font-sans">Nenhum produto cadastrado aqui.</div>
-                                 )}
-                                 
-                                 <button 
-                                    onClick={(e) => {
-                                       e.stopPropagation();
-                                       setExpandedCategory(cat.id);
-                                       setEditingItem(null); 
-                                       setModalHeuristicDisabled(true);
-                                       setIsProductModalOpen(true);
-                                    }}
-                                    className={clsx("w-full bg-slate-900/50 border border-dashed border-slate-700 py-3 rounded-xl flex flex-wrap items-center justify-center gap-2 transition-all print:hidden group hover:bg-slate-800", `hover:border-${currentDeptConfig.color}-500/50`)}
-                                 >
-                                    <Plus size={18} className={clsx("transition-colors", `group-hover:text-${currentDeptConfig.color}-400`)} />
-                                    <span className={clsx("font-bold text-center transition-colors text-slate-400", `group-hover:text-${currentDeptConfig.color}-400`)}>Cadastrar Novo {cat.title.split(' / ')[0]}</span>
-                                 </button>
-                               </div>
-                           </motion.div>
-                         )}
-                       </AnimatePresence>
+                    <div key={cat.id} className="mb-4">
+                      {/* Cabeçalho da categoria */}
+                      <div className="flex items-center justify-between px-1 mb-1.5">
+                        <div className="flex items-center gap-2">
+                          <span className="text-base">{cat.emoji}</span>
+                          <span className={clsx("text-xs font-black uppercase tracking-widest", currentDeptConfig.accentClass)}>{cat.title}</span>
+                          <span className="text-xs text-slate-600 font-medium">({itemsContados}/{catItems.length})</span>
+                        </div>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); setExpandedCategory(cat.id); setEditingItem(null); setModalHeuristicDisabled(true); setIsProductModalOpen(true); }}
+                          className={clsx("print:hidden flex items-center gap-1 text-xs font-bold px-2 py-1 rounded-lg transition-colors text-slate-500 hover:text-white hover:bg-slate-800")}
+                        >
+                          <Plus size={12} /> Novo
+                        </button>
+                      </div>
+
+                      {/* Lista de produtos */}
+                      <div className="bg-slate-900/50 border border-slate-800 rounded-2xl overflow-hidden">
+                        {catItems.length === 0 ? (
+                          <div className="px-4 py-3 text-xs text-slate-600 italic">Nenhum produto cadastrado.</div>
+                        ) : (
+                          catItems.map((item, idx) => {
+                            const totalItem = (item.estoque_loja || 0) + (item.estoque_camara || 0);
+                            const pesado = totalItem > 0;
+                            return (
+                              <div key={item.id}
+                                className={clsx(
+                                  "flex items-center justify-between px-4 py-3 transition-colors",
+                                  idx !== catItems.length - 1 && "border-b border-slate-800/70",
+                                  pesado ? "bg-transparent" : "opacity-60"
+                                )}
+                              >
+                                {/* Código + Nome */}
+                                <div className="flex items-center gap-3 flex-1 min-w-0">
+                                  <span className="text-slate-500 font-mono text-xs w-7 shrink-0">{item.id}</span>
+                                  <span className="text-white font-semibold text-sm truncate">{item.nome}</span>
+                                </div>
+
+                                {/* Peso total */}
+                                <div className="flex items-center gap-3 shrink-0">
+                                  {pesado ? (
+                                    <div className="text-right">
+                                      <div className={clsx("text-base font-extrabold", currentDeptConfig.accentClass)}>
+                                        {totalItem.toFixed(3)}<span className="text-xs text-slate-500 ml-0.5">kg</span>
+                                      </div>
+                                      <div className="text-[10px] text-slate-600 text-right">
+                                        L:{(item.estoque_loja||0).toFixed(3)} C:{(item.estoque_camara||0).toFixed(3)}
+                                      </div>
+                                    </div>
+                                  ) : (
+                                    <span className="text-xs text-slate-700 font-mono">—</span>
+                                  )}
+                                  {/* Botão editar */}
+                                  <button
+                                    onClick={() => { setEditingItem(item); setIsProductModalOpen(true); }}
+                                    className={clsx("p-1.5 rounded-lg transition-colors print:hidden", pesado ? `bg-slate-800 hover:bg-slate-700 ${currentDeptConfig.accentClass}` : "bg-slate-800/50 text-slate-600 hover:text-slate-400")}
+                                  >
+                                    <Table2 size={14} />
+                                  </button>
+                                </div>
+                              </div>
+                            );
+                          })
+                        )}
+                      </div>
                     </div>
                   );
                })}
