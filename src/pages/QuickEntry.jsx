@@ -5,11 +5,8 @@ import { toast, Toaster } from 'sonner';
 import { clsx } from 'clsx';
 import {
   LogOut, Delete, Check, X, Search,
-  ChefHat, Scale, Pencil, Trash2, ClipboardList,
-  FileText, FileSpreadsheet, CheckCircle2
+  ChefHat, Scale, Pencil, Trash2, ClipboardList, CheckCircle2
 } from 'lucide-react';
-import * as XLSX from 'xlsx';
-import { gerarNomeArquivo, exportarVR } from '../utils/exportTools';
 import { INITIAL_PRODUCTS } from '../initialData';
 
 const DEPT_CONFIG = {
@@ -442,74 +439,30 @@ export default function QuickEntry() {
 
               {/* Finalizar Balanço */}
               {sessionLog.some(l => l.mode === 'balanco') && (
-                <div className={clsx('rounded-2xl border p-3 flex flex-col gap-2', deptCfg.bg, deptCfg.border)}>
+                <button
+                  onClick={() => { toast.success('Balanço finalizado! Acesse o admin para exportar.'); }}
+                  className={clsx('w-full flex items-center justify-between px-4 py-4 rounded-2xl border font-extrabold text-base transition-all active:scale-[0.98]', deptCfg.bg, deptCfg.border, deptCfg.text)}
+                >
                   <div className="flex items-center gap-2">
-                    <CheckCircle2 size={16} className={deptCfg.text} />
-                    <span className={clsx('text-sm font-extrabold', deptCfg.text)}>Finalizar Balanço</span>
-                    <span className="text-xs text-slate-500 ml-auto">
-                      {sessionLog.filter(l => l.mode === 'balanco').length} itens
-                    </span>
+                    <CheckCircle2 size={18} />
+                    Finalizar Balanço
                   </div>
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => {
-                        exportarVR(items, new Date().toLocaleDateString('pt-BR'));
-                        toast.success('TXT VR gerado!');
-                      }}
-                      className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl bg-slate-900 border border-slate-700 hover:border-blue-500 text-slate-300 hover:text-white text-xs font-bold transition-all active:scale-95"
-                    >
-                      <FileText size={14} className="text-blue-400" /> TXT VR
-                    </button>
-                    <button
-                      onClick={() => {
-                        const ws = XLSX.utils.json_to_sheet(
-                          sessionLog.filter(l => l.mode === 'balanco').map(l => ({
-                            Código: l.itemId, Produto: l.itemNome,
-                            Local: l.location === 'loja' ? 'Loja' : 'Câmara',
-                            'Peso (kg)': l.kg.toFixed(3), Fórmula: l.formula, Hora: l.time
-                          }))
-                        );
-                        const wb = XLSX.utils.book_new();
-                        XLSX.utils.book_append_sheet(wb, ws, 'Balanço');
-                        XLSX.writeFile(wb, `${gerarNomeArquivo('balanco', new Date().toLocaleDateString('pt-BR'))}.xlsx`);
-                        toast.success('Excel gerado!');
-                      }}
-                      className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl bg-slate-900 border border-slate-700 hover:border-emerald-500 text-slate-300 hover:text-white text-xs font-bold transition-all active:scale-95"
-                    >
-                      <FileSpreadsheet size={14} className="text-emerald-400" /> Excel
-                    </button>
-                  </div>
-                </div>
+                  <span className="text-xs font-bold text-slate-400">{sessionLog.filter(l => l.mode === 'balanco').length} itens</span>
+                </button>
               )}
 
               {/* Finalizar Cozinha */}
               {sessionLog.some(l => l.mode === 'cozinha') && (
-                <div className="rounded-2xl border border-amber-500/30 bg-amber-600/10 p-3 flex flex-col gap-2">
+                <button
+                  onClick={() => { toast.success('Cozinha finalizada! Acesse o admin para exportar.'); }}
+                  className="w-full flex items-center justify-between px-4 py-4 rounded-2xl border border-amber-500/40 bg-amber-600/10 text-amber-400 font-extrabold text-base transition-all active:scale-[0.98]"
+                >
                   <div className="flex items-center gap-2">
-                    <ChefHat size={16} className="text-amber-400" />
-                    <span className="text-sm font-extrabold text-amber-400">Finalizar Cozinha</span>
-                    <span className="text-xs text-slate-500 ml-auto">
-                      {sessionLog.filter(l => l.mode === 'cozinha').length} itens
-                    </span>
+                    <ChefHat size={18} />
+                    Finalizar Cozinha
                   </div>
-                  <button
-                    onClick={() => {
-                      const ws = XLSX.utils.json_to_sheet(
-                        sessionLog.filter(l => l.mode === 'cozinha').map(l => ({
-                          Código: l.itemId, Produto: l.itemNome,
-                          'Peso (kg)': l.kg.toFixed(3), Fórmula: l.formula, Hora: l.time
-                        }))
-                      );
-                      const wb = XLSX.utils.book_new();
-                      XLSX.utils.book_append_sheet(wb, ws, 'Cozinha');
-                      XLSX.writeFile(wb, `${gerarNomeArquivo('cozinha', new Date().toLocaleDateString('pt-BR'))}.xlsx`);
-                      toast.success('Relatório Cozinha gerado!');
-                    }}
-                    className="flex items-center justify-center gap-1.5 py-2.5 rounded-xl bg-slate-900 border border-slate-700 hover:border-amber-500 text-slate-300 hover:text-amber-300 text-xs font-bold transition-all active:scale-95"
-                  >
-                    <FileSpreadsheet size={14} className="text-amber-400" /> Exportar Excel Cozinha
-                  </button>
-                </div>
+                  <span className="text-xs font-bold text-slate-400">{sessionLog.filter(l => l.mode === 'cozinha').length} itens</span>
+                </button>
               )}
             </div>
           )}
