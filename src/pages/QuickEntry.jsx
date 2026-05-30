@@ -5,7 +5,7 @@ import { toast, Toaster } from 'sonner';
 import { clsx } from 'clsx';
 import {
   LogOut, Delete, Check, X, Search,
-  ChefHat, Scale, Pencil, Trash2, ClipboardList, Keyboard
+  ChefHat, Scale, Pencil, Trash2, ClipboardList
 } from 'lucide-react';
 import { INITIAL_PRODUCTS } from '../initialData';
 
@@ -199,9 +199,20 @@ export default function QuickEntry() {
         <div className="flex-1" />
 
         {/* Lupa — busca por nome */}
-        <button onClick={() => { setShowSearch(p => !p); setSearchQuery(''); }}
+        <button onClick={() => { setShowSearch(p => !p); setSearchQuery(''); setTab('teclado'); }}
           className="p-2 text-slate-400 hover:text-white transition-colors">
           <Search size={19} />
+        </button>
+
+        {/* Histórico — ao lado da lupa */}
+        <button onClick={() => setTab(p => p === 'historico' ? 'teclado' : 'historico')}
+          className={clsx('relative p-2 transition-colors', tab === 'historico' ? cfg.text : 'text-slate-400 hover:text-white')}>
+          <ClipboardList size={19} />
+          {sessionLog.length > 0 && (
+            <span className="absolute top-1 right-1 w-3.5 h-3.5 bg-blue-500 rounded-full text-[8px] font-black text-white flex items-center justify-center leading-none">
+              {sessionLog.length > 9 ? '9+' : sessionLog.length}
+            </span>
+          )}
         </button>
 
         {/* Balanço */}
@@ -266,26 +277,6 @@ export default function QuickEntry() {
         )}
       </AnimatePresence>
 
-      {/* ── Abas: Teclado | Histórico ──────────────────────────────────── */}
-      <div className="flex border-b border-slate-800 bg-slate-900/60 shrink-0">
-        <button onClick={() => setTab('teclado')}
-          className={clsx('flex-1 py-2.5 text-xs font-extrabold flex items-center justify-center gap-1.5 transition-all border-b-2',
-            tab === 'teclado' ? `${cfg.text} border-current` : 'text-slate-500 border-transparent'
-          )}>
-          <Keyboard size={13} /> Teclado
-        </button>
-        <button onClick={() => setTab('historico')}
-          className={clsx('flex-1 py-2.5 text-xs font-extrabold flex items-center justify-center gap-1.5 transition-all border-b-2 relative',
-            tab === 'historico' ? `${cfg.text} border-current` : 'text-slate-500 border-transparent'
-          )}>
-          <ClipboardList size={13} /> Histórico
-          {sessionLog.length > 0 && (
-            <span className="absolute top-1.5 right-6 w-4 h-4 bg-blue-500 rounded-full text-[9px] font-black text-white flex items-center justify-center">
-              {sessionLog.length > 9 ? '9+' : sessionLog.length}
-            </span>
-          )}
-        </button>
-      </div>
 
       {/* ── ABA: TECLADO ──────────────────────────────────────────────── */}
       {tab === 'teclado' && (
