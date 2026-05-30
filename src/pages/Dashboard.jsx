@@ -576,14 +576,73 @@ export default function Dashboard() {
          )}
 
          {activeTab === 'transferencias' && (
-            <div className="print:hidden">
-               <TransferenciasModule
-                  items={deptSpecificItems}
-                  transferencias={transferencias}
-                  onAddTransferencia={handleAddTransferencia}
-                  onRemoveTransferencia={handleRemoveTransferencia}
-                  dept={selectedDepartment}
-               />
+            <div className="print:hidden flex flex-col gap-4 animate-in fade-in duration-300">
+               {/* ── Métricas do Balanço ── */}
+               {(() => {
+                 const cats = currentDeptConfig.categories;
+                 const totalItens = deptSpecificItems.length;
+                 const pesados = deptSpecificItems.filter(it => (it.estoque_loja||0)+(it.estoque_camara||0) > 0);
+                 const totalKg = pesados.reduce((a,it) => a + (it.estoque_loja||0) + (it.estoque_camara||0), 0);
+                 const pct = totalItens > 0 ? Math.round((pesados.length / totalItens) * 100) : 0;
+
+                 return (
+                   <>
+                     {/* Cards de resumo */}
+                     <div className="grid grid-cols-3 gap-3">
+                       <div className={clsx('flex flex-col items-center justify-center p-4 rounded-2xl border text-center', currentDeptConfig.btnClass.includes('blue') ? 'bg-blue-600/10 border-blue-500/30' : currentDeptConfig.btnClass.includes('yellow') ? 'bg-yellow-600/10 border-yellow-500/30' : 'bg-emerald-600/10 border-emerald-500/30')}>
+                         <span className={clsx('text-3xl font-black', currentDeptConfig.accentClass)}>{pesados.length}</span>
+                         <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mt-1">Pesados</span>
+                       </div>
+                       <div className="flex flex-col items-center justify-center p-4 rounded-2xl border bg-slate-900 border-slate-800 text-center">
+                         <span className="text-3xl font-black text-white">{totalItens - pesados.length}</span>
+                         <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mt-1">Pendentes</span>
+                       </div>
+                       <div className="flex flex-col items-center justify-center p-4 rounded-2xl border bg-slate-900 border-slate-800 text-center">
+                         <span className={clsx('text-2xl font-black', currentDeptConfig.accentClass)}>{pct}%</span>
+                         <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mt-1">Concluído</span>
+                       </div>
+                     </div>
+
+                     {/* Barra de progresso */}
+                     <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4">
+                       <div className="flex justify-between items-center mb-2">
+                         <span className="text-xs font-extrabold uppercase tracking-widest text-slate-400">Progresso do Balanço</span>
+                         <span className={clsx('text-sm font-extrabold', currentDeptConfig.accentClass)}>{totalKg.toFixed(3)} kg total</span>
+                       </div>
+                       <div className="w-full h-3 bg-slate-800 rounded-full overflow-hidden">
+                         <div className={clsx('h-full rounded-full transition-all duration-700', currentDeptConfig.btnClass.split(' ')[0])} style={{ width: `${pct}%` }} />
+                       </div>
+                       <div className="text-xs text-slate-600 mt-1.5">{pesados.length} de {totalItens} itens pesados</div>
+                     </div>
+
+                     {/* Por categoria */}
+                     <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 flex flex-col gap-3">
+                       <span className="text-xs font-extrabold uppercase tracking-widest text-slate-400">Por Categoria</span>
+                       {cats.map(cat => {
+                         const catItems = deptSpecificItems.filter(it => (it.categoria||'').toUpperCase() === cat.id);
+                         const catPesados = catItems.filter(it => (it.estoque_loja||0)+(it.estoque_camara||0) > 0);
+                         const catKg = catPesados.reduce((a,it) => a + (it.estoque_loja||0) + (it.estoque_camara||0), 0);
+                         const catPct = catItems.length > 0 ? Math.round((catPesados.length / catItems.length) * 100) : 0;
+                         return (
+                           <div key={cat.id} className="flex flex-col gap-1">
+                             <div className="flex items-center justify-between">
+                               <div className="flex items-center gap-2">
+                                 <span className="text-sm">{cat.emoji}</span>
+                                 <span className="text-sm font-bold text-white">{cat.title}</span>
+                                 <span className="text-xs text-slate-600">{catPesados.length}/{catItems.length}</span>
+                               </div>
+                               <span className={clsx('text-xs font-extrabold', currentDeptConfig.accentClass)}>{catKg.toFixed(3)} kg</span>
+                             </div>
+                             <div className="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden">
+                               <div className={clsx('h-full rounded-full', currentDeptConfig.btnClass.split(' ')[0])} style={{ width: `${catPct}%` }} />
+                             </div>
+                           </div>
+                         );
+                       })}
+                     </div>
+                   </>
+                 );
+               })()}
             </div>
          )}
          
@@ -617,44 +676,24 @@ export default function Dashboard() {
                           <div className="px-4 py-3 text-xs text-slate-600 italic">Nenhum produto cadastrado.</div>
                         ) : (
                           catItems.map((item, idx) => {
-                            const totalItem = (item.estoque_loja || 0) + (item.estoque_camara || 0);
-                            const pesado = totalItem > 0;
+                            const pesado = (item.estoque_loja||0)+(item.estoque_camara||0) > 0;
                             return (
                               <div key={item.id}
                                 className={clsx(
-                                  "flex items-center justify-between px-4 py-3 transition-colors",
+                                  "flex items-center gap-3 px-4 py-3 transition-colors",
                                   idx !== catItems.length - 1 && "border-b border-slate-800/70",
-                                  pesado ? "bg-transparent" : "opacity-60"
+                                  !pesado && "opacity-50"
                                 )}
                               >
-                                {/* Código + Nome */}
-                                <div className="flex items-center gap-3 flex-1 min-w-0">
-                                  <span className="text-slate-500 font-mono text-xs w-7 shrink-0">{item.id}</span>
-                                  <span className="text-white font-semibold text-sm truncate">{item.nome}</span>
-                                </div>
-
-                                {/* Peso total */}
-                                <div className="flex items-center gap-3 shrink-0">
-                                  {pesado ? (
-                                    <div className="text-right">
-                                      <div className={clsx("text-base font-extrabold", currentDeptConfig.accentClass)}>
-                                        {totalItem.toFixed(3)}<span className="text-xs text-slate-500 ml-0.5">kg</span>
-                                      </div>
-                                      <div className="text-[10px] text-slate-600 text-right">
-                                        L:{(item.estoque_loja||0).toFixed(3)} C:{(item.estoque_camara||0).toFixed(3)}
-                                      </div>
-                                    </div>
-                                  ) : (
-                                    <span className="text-xs text-slate-700 font-mono">—</span>
-                                  )}
-                                  {/* Botão editar */}
-                                  <button
-                                    onClick={() => { setEditingItem(item); setIsProductModalOpen(true); }}
-                                    className={clsx("p-1.5 rounded-lg transition-colors print:hidden", pesado ? `bg-slate-800 hover:bg-slate-700 ${currentDeptConfig.accentClass}` : "bg-slate-800/50 text-slate-600 hover:text-slate-400")}
-                                  >
-                                    <Table2 size={14} />
-                                  </button>
-                                </div>
+                                <span className="text-slate-600 font-mono text-xs w-6 text-right shrink-0">{item.id}</span>
+                                <span className="text-white font-semibold text-sm flex-1 truncate">{item.nome}</span>
+                                <div className={clsx("w-2 h-2 rounded-full shrink-0", pesado ? currentDeptConfig.btnClass.split(' ')[0] : 'bg-slate-700')} />
+                                <button
+                                  onClick={() => { setEditingItem(item); setIsProductModalOpen(true); }}
+                                  className="p-1.5 rounded-lg bg-slate-800/60 hover:bg-slate-700 text-slate-500 hover:text-slate-300 transition-colors print:hidden shrink-0"
+                                >
+                                  <Table2 size={13} />
+                                </button>
                               </div>
                             );
                           })
@@ -676,10 +715,10 @@ export default function Dashboard() {
          {activeTab === 'history' && (
             <div className="print:hidden">
                {/* Note: In History we only show history of THIS selected department! */}
-               <HistoryPage 
-                  history={history.filter(h => h.dept === selectedDepartment)} 
-                  onDeleteRecord={handleDeleteHistoryRecord} 
-                  setPrintingRecord={setPrintingHistoryRecord} 
+               <HistoryPage
+                  history={history.filter(h => !h.dept || h.dept === selectedDepartment)}
+                  onDeleteRecord={handleDeleteHistoryRecord}
+                  setPrintingRecord={setPrintingHistoryRecord}
                />
             </div>
          )}
@@ -763,7 +802,7 @@ export default function Dashboard() {
           )}
         >
           <UtensilsCrossed size={20} className="mb-0.5 mt-0.5" />
-          <span className="text-[9px] font-bold uppercase tracking-widest">Cozinha</span>
+          <span className="text-[9px] font-bold uppercase tracking-widest">Métricas</span>
         </button>
 
         {/* Histórico */}
