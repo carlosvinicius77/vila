@@ -27,7 +27,9 @@ function computeTotal(expr) {
 export default function QuickEntry() {
   const navigate = useNavigate();
   const dept = localStorage.getItem('@acougue/currentDept') || 'Acougue';
-  const cfg = DEPT_CONFIG[dept] || DEPT_CONFIG.Acougue;
+  const deptCfg = DEPT_CONFIG[dept] || DEPT_CONFIG.Acougue;
+
+  const COZINHA_CFG = { label: 'Cozinha', emoji: '🍳', color: 'amber', btn: 'bg-amber-600 hover:bg-amber-500', text: 'text-amber-400', bg: 'bg-amber-600/10', border: 'border-amber-500' };
 
   const [items, setItems] = useState([]);
 
@@ -41,6 +43,9 @@ export default function QuickEntry() {
   const [formula, setFormula] = useState('');
   const [location, setLocation] = useState('loja');
   const [mode, setMode] = useState('balanco'); // 'balanco' | 'cozinha'
+
+  // cfg muda com o modo — cozinha = amarelo, balanço = cor do setor
+  const cfg = mode === 'cozinha' ? COZINHA_CFG : deptCfg;
 
   // Busca por nome (lupa)
   const [showSearch, setShowSearch] = useState(false);
@@ -221,7 +226,7 @@ export default function QuickEntry() {
         {/* Cozinha */}
         <button onClick={() => setMode('cozinha')}
           className={clsx('flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-extrabold transition-all',
-            mode === 'cozinha' ? 'bg-amber-600 text-white shadow-lg' : 'bg-slate-800 text-slate-400'
+            mode === 'cozinha' ? 'bg-amber-600 hover:bg-amber-500 text-white shadow-lg' : 'bg-slate-800 text-slate-400'
           )}>
           <ChefHat size={13} /> Cozinha
         </button>
@@ -363,9 +368,7 @@ export default function QuickEntry() {
                 </>
               )}
               <button onClick={() => pressKey('OK')}
-                className={clsx('col-span-3 rounded-2xl font-extrabold text-white text-xl flex items-center justify-center gap-3 shadow-lg transition-all active:scale-[0.98]',
-                  phase === 'weight' && mode === 'cozinha' ? 'bg-amber-600 hover:bg-amber-500' : cfg.btn
-                )}>
+                className={clsx('col-span-3 rounded-2xl font-extrabold text-white text-xl flex items-center justify-center gap-3 shadow-lg transition-all active:scale-[0.98]', cfg.btn)}>
                 {phase === 'code'                          && <><Search size={20} /> Buscar Produto</>}
                 {phase === 'weight' && mode === 'balanco'  && <><Check size={22} strokeWidth={3} /> Confirmar Pesagem</>}
                 {phase === 'weight' && mode === 'cozinha'  && <><ChefHat size={20} /> Confirmar Cozinha</>}
@@ -394,7 +397,7 @@ export default function QuickEntry() {
                   <div className="flex-1 min-w-0">
                     <div className="font-bold text-white text-sm truncate">{log.itemNome}</div>
                     <div className="text-[11px] text-slate-500 mt-0.5 flex items-center gap-1.5 flex-wrap">
-                      <span className={clsx('font-bold', log.mode === 'balanco' ? cfg.text : 'text-amber-400')}>
+                      <span className={clsx('font-bold', log.mode === 'balanco' ? deptCfg.text : 'text-amber-400')}>
                         {log.mode === 'balanco' ? `⚖️ ${log.location === 'loja' ? 'Loja' : 'Câmara'}` : '🍳 Cozinha'}
                       </span>
                       <span className="text-slate-600">·</span>
@@ -402,7 +405,7 @@ export default function QuickEntry() {
                       {log.formula && <span className="font-mono text-slate-600 truncate max-w-[100px]">{log.formula}</span>}
                     </div>
                   </div>
-                  <span className={clsx('text-base font-extrabold shrink-0', log.mode === 'balanco' ? cfg.text : 'text-amber-400')}>
+                  <span className={clsx('text-base font-extrabold shrink-0', log.mode === 'balanco' ? deptCfg.text : 'text-amber-400')}>
                     {log.kg.toFixed(3)}<span className="text-xs text-slate-500 ml-0.5">kg</span>
                   </span>
                   {/* Editar */}
@@ -448,7 +451,7 @@ export default function QuickEntry() {
                 <div className="text-xs font-black uppercase tracking-widest text-slate-500 mb-1">Novo peso</div>
                 <div className="font-mono text-slate-500 text-xs text-right min-h-[14px]">{editFormula || '—'}</div>
                 <div className="flex items-baseline justify-end gap-2 mt-1">
-                  <span className={clsx('text-5xl font-black tracking-tighter', editingLog.entry.mode === 'balanco' ? cfg.text : 'text-amber-400')}>{editTotal.toFixed(3)}</span>
+                  <span className={clsx('text-5xl font-black tracking-tighter', editingLog.entry.mode === 'balanco' ? deptCfg.text : 'text-amber-400')}>{editTotal.toFixed(3)}</span>
                   <span className="text-xl font-bold text-slate-500">kg</span>
                 </div>
               </div>
@@ -470,7 +473,7 @@ export default function QuickEntry() {
                 </button>
                 <button onClick={saveEdit}
                   className={clsx('col-span-3 rounded-2xl font-extrabold text-white text-xl flex items-center justify-center gap-3 shadow-lg active:scale-[0.98]',
-                    editingLog.entry.mode === 'balanco' ? cfg.btn : 'bg-amber-600 hover:bg-amber-500'
+                    editingLog.entry.mode === 'balanco' ? deptCfg.btn : 'bg-amber-600 hover:bg-amber-500'
                   )}>
                   <Check size={22} strokeWidth={3} /> Salvar Correção
                 </button>
