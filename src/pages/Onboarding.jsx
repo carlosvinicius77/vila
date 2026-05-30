@@ -131,7 +131,7 @@ export default function Onboarding() {
   const [inputError, setInputError] = useState('');
 
   const STEP_QUESTIONS = {
-    1: 'Olá! 👋 Para configurar seu Balanço Digital, como posso te chamar?',
+    1: 'Olá! 👋 Para configurar seu TenTech, como posso te chamar?',
     2: (name) => `Prazer, ${name}! 😊 Qual o nome da sua rede de supermercados?`,
     3: (net) => `Entendi, ${net}! ✨ E quantas lojas você deseja gerenciar com nosso sistema hoje?`,
     4: () => 'Perfeito! 🎉 Para finalizar seu acesso corporativo, digite seu melhor e-mail e crie uma senha segura.',

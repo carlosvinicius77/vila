@@ -51,7 +51,7 @@ export default function Landing() {
             </h1>
             
             <p className="text-lg md:text-xl lg:text-2xl text-slate-400 mb-12 leading-relaxed font-medium max-w-2xl">
-              O Balanço Digital transforma o inventário do seu <span className="text-slate-200">Açougue, Frios e Hortifruti</span> em um processo rápido, digital e sem erros.
+              O TenTech transforma o inventário do seu <span className="text-slate-200">Açougue, Frios e Hortifruti</span> em um processo rápido, digital e sem erros.
             </p>
             
             <div className="flex flex-col sm:flex-row gap-5 w-full sm:w-auto items-center">
@@ -340,7 +340,7 @@ export default function Landing() {
             </div>
             
             <div className="border-t border-slate-900 pt-8 flex flex-col md:flex-row items-center justify-between gap-4">
-               <p className="text-sm text-slate-600">© {new Date().getFullYear()} Balanço Digital S/A. Todos os direitos reservados para operações Cloud.</p>
+               <p className="text-sm text-slate-600">© {new Date().getFullYear()} TenTech S/A. Todos os direitos reservados para operações Cloud.</p>
                <div className="flex gap-4">
                   {/* Mock Social Icons */}
                   <div className="w-8 h-8 rounded-full border border-slate-800 flex items-center justify-center text-slate-500 hover:text-white hover:border-slate-500 transition-colors cursor-pointer"><Mail size={14}/></div>

@@ -140,7 +140,7 @@ export default function Login() {
               <span className="text-white font-black text-lg">B</span>
             </div>
             <span className="text-xl font-extrabold text-white tracking-tight">
-              Balanço<span className="text-blue-400">Digital</span>
+              Ten<span className="text-blue-400">Tech</span>
             </span>
           </div>
           <p className="text-xs text-slate-500 font-medium">Sistema de inventário de perecíveis</p>

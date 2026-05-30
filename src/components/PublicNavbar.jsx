@@ -104,7 +104,7 @@ export function PublicNavbar() {
             </div>
             
             <div className="mt-auto mb-10 text-center">
-              <p className="text-sm text-slate-500 font-medium">Balanço Digital S/A • 2026</p>
+              <p className="text-sm text-slate-500 font-medium">TenTech S/A • 2026</p>
             </div>
           </motion.div>
         )}
