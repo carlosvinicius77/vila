@@ -173,23 +173,19 @@ export function HistoryPage({ history, onDeleteRecord, setPrintingRecord }) {
                     );
                   })}
 
-                  {/* Botões de ação */}
-                  <div className="grid grid-cols-2 gap-2 p-4">
-                    <button onClick={() => exportarVR(allItems, record.date)}
-                      className="flex items-center justify-center gap-2 bg-zinc-900 border border-zinc-700 hover:border-blue-500 p-3 rounded-xl transition text-xs font-bold text-slate-300">
-                      <FileText size={14} className="text-blue-400" /> TXT VR
-                    </button>
-                    <button onClick={() => exportarExcel(allItems, record.date)}
-                      className="flex items-center justify-center gap-2 bg-zinc-900 border border-zinc-700 hover:border-emerald-500 p-3 rounded-xl transition text-xs font-bold text-slate-300">
-                      <FileSpreadsheet size={14} className="text-emerald-400" /> Excel
-                    </button>
+                  {/* Botões de ação — igual estilo do Balanço */}
+                  <div className="flex items-center gap-2 p-4 pt-3">
                     <button onClick={() => handlePrint(record)}
-                      className="flex items-center justify-center gap-2 bg-zinc-900 border border-zinc-700 hover:border-slate-400 p-3 rounded-xl transition text-xs font-bold text-slate-300">
-                      <Printer size={14} className="text-slate-400" /> Imprimir
+                      className="flex items-center justify-center gap-2 bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 px-4 py-3.5 rounded-xl transition text-sm font-bold text-slate-300 flex-1">
+                      <Printer size={16} /> Finalizar
+                    </button>
+                    <button onClick={() => { exportarVR(allItems, record.date); exportarExcel(allItems, record.date); }}
+                      className="flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-500 px-4 py-3.5 rounded-xl transition text-sm font-bold text-white flex-[2] shadow-lg shadow-blue-500/20">
+                      <FileSpreadsheet size={16} /> Gerar TXT/Excel
                     </button>
                     <button onClick={() => { if (window.confirm('Excluir este balanço?')) onDeleteRecord(record.date); }}
-                      className="flex items-center justify-center gap-2 bg-red-950/30 border border-red-900/50 hover:border-red-500 p-3 rounded-xl transition text-xs font-bold text-red-400">
-                      <Trash2 size={14} /> Excluir
+                      className="p-3.5 rounded-xl bg-red-950/30 border border-red-900/50 hover:border-red-500 transition text-red-400 shrink-0">
+                      <Trash2 size={16} />
                     </button>
                   </div>
                 </div>
