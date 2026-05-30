@@ -56,6 +56,8 @@ export default function QuickEntry() {
   // Edição
   const [editingLog, setEditingLog] = useState(null); // { index, entry }
   const [editFormula, setEditFormula] = useState('');
+  const [confirmModal, setConfirmModal] = useState(null); // 'balanco' | 'cozinha'
+  const [finalizado, setFinalizado] = useState(null); // 'balanco' | 'cozinha'
 
   const total = computeTotal(formula);
   const editTotal = computeTotal(editFormula);
@@ -440,7 +442,7 @@ export default function QuickEntry() {
               {/* Finalizar Balanço */}
               {sessionLog.some(l => l.mode === 'balanco') && (
                 <button
-                  onClick={() => { toast.success('Balanço finalizado! Acesse o admin para exportar.'); }}
+                  onClick={() => setConfirmModal('balanco')}
                   className={clsx('w-full flex items-center justify-between px-4 py-4 rounded-2xl border font-extrabold text-base transition-all active:scale-[0.98]', deptCfg.bg, deptCfg.border, deptCfg.text)}
                 >
                   <div className="flex items-center gap-2">
@@ -454,7 +456,7 @@ export default function QuickEntry() {
               {/* Finalizar Cozinha */}
               {sessionLog.some(l => l.mode === 'cozinha') && (
                 <button
-                  onClick={() => { toast.success('Cozinha finalizada! Acesse o admin para exportar.'); }}
+                  onClick={() => setConfirmModal('cozinha')}
                   className="w-full flex items-center justify-between px-4 py-4 rounded-2xl border border-amber-500/40 bg-amber-600/10 text-amber-400 font-extrabold text-base transition-all active:scale-[0.98]"
                 >
                   <div className="flex items-center gap-2">
@@ -468,6 +470,80 @@ export default function QuickEntry() {
           )}
         </div>
       )}
+
+      {/* ── Modal de confirmação ─────────────────────────────────────── */}
+      <AnimatePresence>
+        {confirmModal && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-end justify-center p-4">
+            <motion.div initial={{ y: 40, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 40, opacity: 0 }}
+              transition={{ type: 'spring', damping: 28, stiffness: 300 }}
+              className="w-full max-w-sm bg-slate-900 border border-slate-700 rounded-3xl p-6 flex flex-col gap-5">
+
+              <div className="flex flex-col items-center text-center gap-3">
+                <div className={clsx('w-16 h-16 rounded-2xl flex items-center justify-center text-3xl',
+                  confirmModal === 'balanco' ? `${deptCfg.bg} border-2 ${deptCfg.border}` : 'bg-amber-600/10 border-2 border-amber-500/40'
+                )}>
+                  {confirmModal === 'balanco' ? '⚖️' : '🍳'}
+                </div>
+                <div>
+                  <div className="text-lg font-extrabold text-white">
+                    {confirmModal === 'balanco' ? 'Finalizar Balanço?' : 'Finalizar Cozinha?'}
+                  </div>
+                  <div className="text-sm text-slate-400 mt-1">
+                    {confirmModal === 'balanco'
+                      ? `${sessionLog.filter(l => l.mode === 'balanco').length} itens pesados serão registrados.`
+                      : `${sessionLog.filter(l => l.mode === 'cozinha').length} itens da cozinha serão registrados.`
+                    }
+                  </div>
+                  <div className="text-xs text-slate-500 mt-2">Você poderá exportar pelo painel admin.</div>
+                </div>
+              </div>
+
+              <div className="flex gap-3">
+                <button onClick={() => setConfirmModal(null)}
+                  className="flex-1 py-3.5 rounded-2xl bg-slate-800 text-slate-300 font-bold text-sm active:scale-95 transition-all">
+                  Cancelar
+                </button>
+                <button
+                  onClick={() => {
+                    setConfirmModal(null);
+                    setFinalizado(confirmModal);
+                    setTimeout(() => { setFinalizado(null); setSessionLog([]); setTab('teclado'); }, 2500);
+                  }}
+                  className={clsx('flex-1 py-3.5 rounded-2xl font-extrabold text-white text-sm active:scale-95 transition-all shadow-lg',
+                    confirmModal === 'balanco' ? deptCfg.btn : 'bg-amber-600 hover:bg-amber-500'
+                  )}>
+                  Confirmar
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ── Tela de Finalizado ────────────────────────────────────────── */}
+      <AnimatePresence>
+        {finalizado && (
+          <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 bg-slate-950 flex flex-col items-center justify-center gap-6">
+            <motion.div
+              initial={{ scale: 0.5, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
+              transition={{ type: 'spring', damping: 12, stiffness: 200 }}
+              className={clsx('w-24 h-24 rounded-3xl flex items-center justify-center text-5xl border-2',
+                finalizado === 'balanco' ? `${deptCfg.bg} ${deptCfg.border}` : 'bg-amber-600/10 border-amber-500'
+              )}>
+              ✅
+            </motion.div>
+            <div className="text-center">
+              <div className={clsx('text-2xl font-extrabold', finalizado === 'balanco' ? deptCfg.text : 'text-amber-400')}>
+                {finalizado === 'balanco' ? 'Balanço Finalizado!' : 'Cozinha Finalizada!'}
+              </div>
+              <div className="text-sm text-slate-400 mt-2">Dados salvos. Acesse o admin para exportar.</div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* ── Modal de edição ───────────────────────────────────────────── */}
       <AnimatePresence>
