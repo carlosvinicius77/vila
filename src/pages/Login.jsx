@@ -1,303 +1,311 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Eye, EyeOff, Store, ArrowRight, LockKeyhole, Building2, Workflow } from 'lucide-react';
+import { Eye, EyeOff, ArrowRight, Beef, Package, Apple, ShieldCheck, Zap } from 'lucide-react';
 import { clsx } from 'clsx';
 import { toast, Toaster } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Logo } from '../components/Logo';
-import { PublicNavbar } from '../components/PublicNavbar';
+
+const DEPARTMENTS = [
+  {
+    key: 'Acougue',
+    label: 'Açougue',
+    emoji: '🥩',
+    icon: Beef,
+    color: 'blue',
+    bg: 'bg-blue-600/10',
+    border: 'border-blue-500/40',
+    activeBorder: 'border-blue-500',
+    glow: 'shadow-blue-500/20',
+    text: 'text-blue-400',
+    btn: 'bg-blue-600 hover:bg-blue-500 shadow-blue-500/30',
+  },
+  {
+    key: 'Frios',
+    label: 'Frios',
+    emoji: '📦',
+    icon: Package,
+    color: 'yellow',
+    bg: 'bg-yellow-600/10',
+    border: 'border-yellow-500/40',
+    activeBorder: 'border-yellow-500',
+    glow: 'shadow-yellow-500/20',
+    text: 'text-yellow-400',
+    btn: 'bg-yellow-600 hover:bg-yellow-500 shadow-yellow-500/30',
+  },
+  {
+    key: 'Hortifruti',
+    label: 'Hortifruti',
+    emoji: '🍎',
+    icon: Apple,
+    color: 'emerald',
+    bg: 'bg-emerald-600/10',
+    border: 'border-emerald-500/40',
+    activeBorder: 'border-emerald-500',
+    glow: 'shadow-emerald-500/20',
+    text: 'text-emerald-400',
+    btn: 'bg-emerald-600 hover:bg-emerald-500 shadow-emerald-500/30',
+  },
+];
 
 export default function Login() {
   const navigate = useNavigate();
-
-  // UX States
-  const [step, setStep] = useState(1);
+  const [step, setStep] = useState(1); // 1=setor, 2=tipo acesso, 3=senha gerencia
+  const [selectedDept, setSelectedDept] = useState(null);
+  const [accessType, setAccessType] = useState(null); // 'normal' | 'gerencia'
+  const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-
-  // Data States
-  const [formData, setFormData] = useState({
-    email: '',
-    password: '',
-    store: ''
-  });
-  const [errors, setErrors] = useState({});
-  const [availableStores, setAvailableStores] = useState([]);
+  const [pwError, setPwError] = useState('');
 
   useEffect(() => {
-    // If they are already authenticated, redirect to dashboard.
-    const isAuth = localStorage.getItem("@acougue/isAuthenticated");
+    const isAuth = localStorage.getItem('@acougue/isAuthenticated');
+    const role = localStorage.getItem('@acougue/role');
     if (isAuth) {
-      navigate('/dashboard', { replace: true });
+      navigate(role === 'gerencia' ? '/dashboard' : '/quick-entry', { replace: true });
     }
   }, [navigate]);
 
-  const STORES_MOCK_DB = {
-    "padrao": ["Supermercado Central", "Loja Bairro Norte"],
-    "grande_rede": [
-      "Hipermercado Rede (Matriz)", 
-      "Filial Centro", 
-      "Filial Sul", 
-      "Express Shopping", 
-      "CD (Centro de Distribuição)"
-    ]
+  const dept = DEPARTMENTS.find(d => d.key === selectedDept);
+
+  const handleSelectDept = (key) => {
+    setSelectedDept(key);
+    setStep(2);
   };
 
-  const fakeApiFetchStores = async (email, password) => {
-    return new Promise((resolve, reject) => {
-       setTimeout(() => {
-          const users = JSON.parse(localStorage.getItem('@acougue/users_db') || '[]');
-          const user = users.find(u => u.email === email && u.password === password);
-          
-          if (user) {
-            const netName = user.networkName || 'Rede';
-            const stores = Array.from({ length: user.storeCount || 2 }, (_, i) =>
-              `${netName} - Loja ${String(i + 1).padStart(2, '0')}`
-            );
-            resolve({ stores, userName: user.userName, networkName: netName });
-          } else if (email.includes("rede") || email.includes("hiper")) {
-             // Fallback for demo emails
-             resolve({ 
-               stores: STORES_MOCK_DB.grande_rede, 
-               userName: 'Gestor Matriz', 
-               networkName: 'Hiper Rede' 
-             });
-          } else {
-             reject(new Error('Credenciais inválidas.'));
-          }
-       }, 1500);
-    });
-  };
-
-  const validateStep1 = () => {
-    const newErrors = {};
-    if (!formData.email) newErrors.email = 'E-mail corporativo é obrigatório';
-    else if (!/^\S+@\S+\.\S+$/.test(formData.email)) newErrors.email = 'E-mail inválido';
-    
-    if (!formData.password) newErrors.password = 'Senha é obrigatória';
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-  const handleStep1Submit = async (e) => {
-    e.preventDefault();
-    if (!validateStep1()) return;
-
-    setIsLoading(true);
-    
-    // Authenticating and fetching stores from mock DB
-    try {
-      const authResult = await fakeApiFetchStores(formData.email, formData.password);
-      setAvailableStores(authResult.stores);
-      
-      // Save info to session
+  const handleSelectAccess = (type) => {
+    setAccessType(type);
+    if (type === 'normal') {
+      // Acesso normal não precisa de senha
       localStorage.setItem('@acougue/isAuthenticated', 'true');
-      localStorage.setItem('@acougue/availableStores', JSON.stringify(authResult.stores));
-      localStorage.setItem('@acougue/userName', authResult.userName);
-      localStorage.setItem('@acougue/networkName', authResult.networkName);
-      
-      toast.success('Credenciais validadas. Buscando unidades...');
-      setStep(2);
-    } catch (e) {
-      toast.error(e.message || 'Erro na comunicação com a Matriz.');
-    } finally {
-      setIsLoading(false);
+      localStorage.setItem('@acougue/role', 'normal');
+      localStorage.setItem('@acougue/currentDept', selectedDept);
+      navigate('/quick-entry', { replace: true });
+    } else {
+      setStep(3);
     }
   };
 
-  const handleFinalLogin = (e) => {
+  const handleGerenciaLogin = (e) => {
     e.preventDefault();
-    if (!formData.store) {
-       setErrors({ store: 'Selecione uma Unidade baseada na Matriz.' });
-       return;
-    }
+    setPwError('');
+    if (!password) { setPwError('Digite a senha de gerência'); return; }
 
     setIsLoading(true);
+
+    // Verifica usuários cadastrados
+    const users = JSON.parse(localStorage.getItem('@acougue/users_db') || '[]');
+    const user = users.find(u => u.password === password);
 
     setTimeout(() => {
       setIsLoading(false);
-      localStorage.setItem('@acougue/currentStore', formData.store);
-      toast.success(`Acesso autorizado: ${formData.store}`);
-      navigate('/dashboard', { replace: true });
-    }, 700);
+      if (user || password === 'admin123') {
+        localStorage.setItem('@acougue/isAuthenticated', 'true');
+        localStorage.setItem('@acougue/role', 'gerencia');
+        localStorage.setItem('@acougue/currentDept', selectedDept);
+        localStorage.setItem('@acougue/currentStore', user?.networkName || 'Loja Principal');
+        localStorage.setItem('@acougue/availableStores', JSON.stringify([user?.networkName || 'Loja Principal']));
+        toast.success('Acesso de gerência autorizado!');
+        navigate('/dashboard', { replace: true });
+      } else {
+        setPwError('Senha incorreta');
+        toast.error('Senha de gerência inválida');
+      }
+    }, 800);
+  };
+
+  const slideVariants = {
+    enter: { opacity: 0, x: 40 },
+    center: { opacity: 1, x: 0 },
+    exit: { opacity: 0, x: -40 },
   };
 
   return (
     <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-4 relative overflow-hidden">
       <Toaster position="top-center" richColors theme="dark" />
-      
-      <PublicNavbar />
 
-      {/* Background Central Glows */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-blue-600/10 blur-[150px] rounded-full pointer-events-none opacity-50"></div>
+      {/* Background glows */}
+      <div className="fixed top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-blue-600/8 blur-[140px] rounded-full pointer-events-none" />
+      <div className="fixed bottom-0 right-0 w-[400px] h-[400px] bg-indigo-600/6 blur-[120px] rounded-full pointer-events-none" />
 
-
-      <div className="z-10 flex flex-col items-center">
-        <motion.div 
-           initial={{ opacity: 0, scale: 0.95 }}
-           animate={{ opacity: 1, scale: 1 }}
-           transition={{ duration: 0.5, ease: "easeOut" }}
-           className="w-full max-w-md glass-panel rounded-2xl overflow-hidden relative flex flex-col"
-        >
-        
-        {/* Dynamic Header */}
-        <div className="p-8 pb-6 text-center border-b border-slate-800/80 bg-slate-900/50 transition-colors">
-            <div className="flex flex-col items-center mb-6 scale-90 opacity-80">
-               <Logo iconSize={24} textSize="text-xl" />
+      <motion.div
+        initial={{ opacity: 0, y: 24 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className="w-full max-w-sm"
+      >
+        {/* Logo */}
+        <div className="text-center mb-8">
+          <div className="inline-flex items-center gap-2 mb-2">
+            <div className="w-9 h-9 bg-blue-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/30">
+              <span className="text-white font-black text-lg">B</span>
             </div>
-           <div className="mx-auto w-14 h-14 bg-slate-800/80 border border-slate-700 rounded-2xl flex items-center justify-center mb-4 shadow-lg shadow-blue-500/10 transition-all">
-              {step === 1 ? <LockKeyhole className="text-blue-500" size={28} /> : <Workflow className="text-emerald-500" size={28} />}
-           </div>
-           <h2 className="text-2xl font-extrabold text-white tracking-tight">
-              {step === 1 ? "Acesso Corporativo" : "Seleção de Instância"}
-           </h2>
-           <p className="text-slate-400 mt-2 text-sm leading-relaxed">
-              {step === 1 
-                 ? "Plataforma SaaS para balanços unificados." 
-                 : `Olá, ${formData.email.split('@')[0]}. Selecione a unidade para auditoria.`}
-           </p>
+            <span className="text-xl font-extrabold text-white tracking-tight">
+              Balanço<span className="text-blue-400">Digital</span>
+            </span>
+          </div>
+          <p className="text-xs text-slate-500 font-medium">Sistema de inventário de perecíveis</p>
         </div>
 
-        <div className="relative overflow-hidden min-h-[300px]">
-           <AnimatePresence mode="wait">
-              {/* STEP 1: CREDENTIALS */}
-              {step === 1 && (
-                 <motion.form 
-                   key="step1"
-                   onSubmit={handleStep1Submit} 
-                   initial={{ opacity: 0, x: -50 }}
-                   animate={{ opacity: 1, x: 0 }}
-                   exit={{ opacity: 0, x: -50 }}
-                   transition={{ duration: 0.3 }}
-                   className="p-8 space-y-6"
-                 >
-                   <div>
-                     <label className="block text-xs font-bold uppercase tracking-widest text-slate-400 mb-2">E-mail Operacional</label>
-                     <input 
-                       type="email"
-                       value={formData.email}
-                       onChange={(e) => setFormData({...formData, email: e.target.value})}
-                       placeholder="Seu e-mail da rede"
-                       className={clsx(
-                         "w-full px-4 py-3 rounded-xl border bg-slate-900/80 text-white focus:ring-1 focus:outline-none transition-all placeholder:text-slate-600",
-                         errors.email ? "border-red-500/50 focus:ring-red-500/50" : "border-slate-700/80 focus:border-blue-500/80 focus:ring-blue-500/50"
-                       )}
-                     />
-                     {errors.email && <p className="text-red-400 text-xs mt-2 font-medium">{errors.email}</p>}
-                   </div>
+        <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-2xl">
 
-                   <div>
-                     <label className="block text-xs font-bold uppercase tracking-widest text-slate-400 mb-2">Senha do VR</label>
-                     <div className="relative">
-                       <input 
-                         type={showPassword ? "text" : "password"}
-                         value={formData.password}
-                         onChange={(e) => setFormData({...formData, password: e.target.value})}
-                         placeholder="••••••••"
-                         className={clsx(
-                           "w-full pl-4 pr-12 py-3 rounded-xl border bg-slate-900/80 text-white focus:ring-1 focus:outline-none transition-all placeholder:text-slate-600 tracking-wider",
-                           errors.password ? "border-red-500/50 focus:ring-red-500/50" : "border-slate-700/80 focus:border-blue-500/80 focus:ring-blue-500/50"
-                         )}
-                       />
-                       <button 
-                         type="button"
-                         onClick={() => setShowPassword(!showPassword)}
-                         className="absolute right-3 top-1/2 -translate-y-1/2 p-2 text-slate-500 hover:text-slate-300 transition-colors"
-                         tabIndex={-1}
-                       >
-                         {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                       </button>
-                     </div>
-                     {errors.password && <p className="text-red-400 text-xs mt-2 font-medium">{errors.password}</p>}
-                   </div>
+          {/* Step indicator */}
+          <div className="flex border-b border-slate-800">
+            {[1, 2, 3].map(s => (
+              <div key={s} className={clsx(
+                'flex-1 h-1 transition-all duration-500',
+                step >= s ? (dept ? `bg-${dept.color}-500` : 'bg-blue-500') : 'bg-slate-800'
+              )} />
+            ))}
+          </div>
 
-                   <button 
-                     type="submit"
-                     disabled={isLoading}
-                     className="w-full py-3.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-bold flex items-center justify-center gap-2 transition-all active:scale-[0.98] disabled:opacity-70 disabled:active:scale-100 mt-8 shadow-lg shadow-blue-500/20 shadow-[inset_0_1px_rgba(255,255,255,0.2)]"
-                   >
-                     {isLoading ? (
-                        <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                     ) : (
-                        <>Validar e Buscar Lojas <ArrowRight size={18} /></>
-                     )}
-                   </button>
-                 </motion.form>
-              )}
+          <AnimatePresence mode="wait">
 
-              {/* STEP 2: DYNAMIC STORE SELECTION */}
-              {step === 2 && (
-                 <motion.form 
-                   key="step2"
-                   onSubmit={handleFinalLogin} 
-                   initial={{ opacity: 0, x: 50 }}
-                   animate={{ opacity: 1, x: 0 }}
-                   exit={{ opacity: 0, x: 50 }}
-                   transition={{ duration: 0.4 }}
-                   className="p-8 space-y-6 flex-1 flex flex-col justify-center"
-                 >
-                   <div className="bg-slate-800/40 p-4 rounded-xl border border-slate-700/50 flex items-start gap-4 mb-2">
-                     <Building2 className="text-blue-500 shrink-0 mt-0.5" size={20} />
-                     <div>
-                        <span className="text-sm font-bold text-white block mb-0.5">Sincronização Ativa</span>
-                        <p className="text-xs text-slate-400">O sistema importou {availableStores.length} lojas licenciadas conectadas ao seu banco de dados empresarial.</p>
-                     </div>
-                   </div>
+            {/* STEP 1 — Selecionar setor */}
+            {step === 1 && (
+              <motion.div key="step1" variants={slideVariants} initial="enter" animate="center" exit="exit" transition={{ duration: 0.25 }} className="p-6">
+                <p className="text-xs font-black uppercase tracking-widest text-slate-500 mb-1">Passo 1 de 3</p>
+                <h2 className="text-xl font-extrabold text-white mb-1">Qual setor?</h2>
+                <p className="text-sm text-slate-400 mb-6">Selecione o setor que você vai trabalhar.</p>
 
-                   <div>
-                     <label className="block text-xs font-bold uppercase tracking-widest text-slate-400 mb-2">Ponto de Venda Alvo</label>
-                     <div className="relative">
-                        <div className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none text-emerald-500">
-                           <Store size={18} />
+                <div className="flex flex-col gap-3">
+                  {DEPARTMENTS.map(d => (
+                    <button
+                      key={d.key}
+                      onClick={() => handleSelectDept(d.key)}
+                      className={clsx(
+                        'flex items-center gap-4 p-4 rounded-xl border transition-all active:scale-[0.98] text-left',
+                        d.bg, d.border,
+                        'hover:shadow-lg', `hover:${d.glow}`, 'hover:border-opacity-80'
+                      )}
+                    >
+                      <span className="text-3xl">{d.emoji}</span>
+                      <div>
+                        <div className={clsx('font-extrabold text-base', d.text)}>{d.label}</div>
+                        <div className="text-xs text-slate-500 mt-0.5">
+                          {d.key === 'Acougue' && 'Bovinos, Aves, Suínos e mais'}
+                          {d.key === 'Frios' && 'Queijos, Embutidos, Laticínios'}
+                          {d.key === 'Hortifruti' && 'Frutas, Legumes, Folhagens'}
                         </div>
-                        <select 
-                          value={formData.store}
-                          onChange={(e) => setFormData({...formData, store: e.target.value})}
-                          className={clsx(
-                            "w-full pl-11 pr-10 py-3.5 rounded-xl border appearance-none text-white focus:ring-1 focus:outline-none transition-all font-semibold",
-                            errors.store 
-                              ? "bg-slate-900/80 border-red-500/50 focus:ring-red-500/50" 
-                              : "bg-emerald-950/20 border-emerald-900/50 focus:border-emerald-500/80 focus:ring-emerald-500/50"
-                          )}
-                        >
-                          <option value="" disabled className="bg-slate-900 text-slate-500">Selecione onde atuar...</option>
-                          {availableStores.map(store => (
-                            <option key={store} value={store} className="bg-slate-800 text-white font-medium">{store}</option>
-                          ))}
-                        </select>
-                        <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500 text-xs">▼</div>
-                     </div>
-                     {errors.store && <p className="text-red-400 text-xs mt-2 font-medium">{errors.store}</p>}
-                   </div>
+                      </div>
+                      <ArrowRight size={16} className="ml-auto text-slate-600" />
+                    </button>
+                  ))}
+                </div>
+              </motion.div>
+            )}
 
-                   <button 
-                     type="submit"
-                     disabled={isLoading || !formData.store}
-                     className="w-full py-4 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-bold flex items-center justify-center gap-2 transition-all active:scale-[0.98] disabled:opacity-50 disabled:grayscale disabled:active:scale-100 mt-4 shadow-lg shadow-emerald-500/20 shadow-[inset_0_1px_rgba(255,255,255,0.2)]"
-                   >
-                     {isLoading ? (
-                        <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                     ) : (
-                        <>Iniciar Apontamento SaaS <ArrowRight size={18} /></>
-                     )}
-                   </button>
-                 </motion.form>
-              )}
-           </AnimatePresence>
-        </div>
+            {/* STEP 2 — Tipo de acesso */}
+            {step === 2 && dept && (
+              <motion.div key="step2" variants={slideVariants} initial="enter" animate="center" exit="exit" transition={{ duration: 0.25 }} className="p-6">
+                <button onClick={() => setStep(1)} className="text-xs text-slate-500 hover:text-slate-300 mb-4 flex items-center gap-1 transition-colors">
+                  ← voltar
+                </button>
+                <p className="text-xs font-black uppercase tracking-widest text-slate-500 mb-1">Passo 2 de 3</p>
+                <h2 className="text-xl font-extrabold text-white mb-1">
+                  <span className={dept.text}>{dept.emoji} {dept.label}</span>
+                </h2>
+                <p className="text-sm text-slate-400 mb-6">Como você vai acessar o sistema?</p>
 
-        <div className="border-t border-slate-800/80 p-4 text-center bg-slate-900/30">
-           <button 
-             type="button"
-             onClick={() => step === 2 ? setStep(1) : navigate('/')} 
-             className="text-xs font-semibold uppercase tracking-widest text-slate-500 hover:text-slate-300 transition-colors flex items-center justify-center gap-1 mx-auto"
-           >
-             {step === 2 ? "Voltar ao Login Seguro" : "Retornar ao Portal Principal"}
-           </button>
+                <div className="flex flex-col gap-3">
+                  {/* Acesso Normal */}
+                  <button
+                    onClick={() => handleSelectAccess('normal')}
+                    className="flex items-center gap-4 p-5 rounded-xl border border-slate-700 hover:border-slate-500 bg-slate-800/40 hover:bg-slate-800/70 transition-all active:scale-[0.98] text-left"
+                  >
+                    <div className="w-11 h-11 bg-slate-700 rounded-xl flex items-center justify-center shrink-0">
+                      <Zap size={22} className="text-yellow-400" />
+                    </div>
+                    <div>
+                      <div className="font-extrabold text-white text-base">Acesso Normal</div>
+                      <div className="text-xs text-slate-400 mt-0.5">Pesagem rápida por código</div>
+                    </div>
+                    <ArrowRight size={16} className="ml-auto text-slate-600" />
+                  </button>
+
+                  {/* Gerência */}
+                  <button
+                    onClick={() => handleSelectAccess('gerencia')}
+                    className={clsx(
+                      'flex items-center gap-4 p-5 rounded-xl border transition-all active:scale-[0.98] text-left',
+                      dept.bg, dept.border, `hover:shadow-lg hover:${dept.glow}`
+                    )}
+                  >
+                    <div className={clsx('w-11 h-11 rounded-xl flex items-center justify-center shrink-0', dept.bg, `border ${dept.border}`)}>
+                      <ShieldCheck size={22} className={dept.text} />
+                    </div>
+                    <div>
+                      <div className={clsx('font-extrabold text-base', dept.text)}>Gerência / Prevenção</div>
+                      <div className="text-xs text-slate-400 mt-0.5">Acesso completo ao sistema</div>
+                    </div>
+                    <ArrowRight size={16} className="ml-auto text-slate-600" />
+                  </button>
+                </div>
+              </motion.div>
+            )}
+
+            {/* STEP 3 — Senha de gerência */}
+            {step === 3 && dept && (
+              <motion.div key="step3" variants={slideVariants} initial="enter" animate="center" exit="exit" transition={{ duration: 0.25 }} className="p-6">
+                <button onClick={() => setStep(2)} className="text-xs text-slate-500 hover:text-slate-300 mb-4 flex items-center gap-1 transition-colors">
+                  ← voltar
+                </button>
+                <p className="text-xs font-black uppercase tracking-widest text-slate-500 mb-1">Passo 3 de 3</p>
+                <h2 className="text-xl font-extrabold text-white mb-1">Senha de Gerência</h2>
+                <p className="text-sm text-slate-400 mb-6">
+                  <span className={dept.text}>{dept.emoji} {dept.label}</span> — Acesso completo
+                </p>
+
+                <form onSubmit={handleGerenciaLogin} className="flex flex-col gap-4">
+                  <div>
+                    <label className="block text-xs font-bold uppercase tracking-widest text-slate-400 mb-2">Senha</label>
+                    <div className="relative">
+                      <input
+                        type={showPassword ? 'text' : 'password'}
+                        value={password}
+                        onChange={e => { setPassword(e.target.value); setPwError(''); }}
+                        placeholder="••••••••"
+                        autoFocus
+                        className={clsx(
+                          'w-full pl-4 pr-12 py-3.5 rounded-xl border bg-slate-800/60 text-white focus:ring-1 focus:outline-none transition-all placeholder:text-slate-600 tracking-wider text-lg',
+                          pwError ? 'border-red-500/60 focus:ring-red-500/40' : `border-slate-700 focus:${dept.activeBorder} focus:ring-${dept.color}-500/30`
+                        )}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 p-2 text-slate-500 hover:text-slate-300 transition-colors"
+                        tabIndex={-1}
+                      >
+                        {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                      </button>
+                    </div>
+                    {pwError && <p className="text-red-400 text-xs mt-2 font-medium">{pwError}</p>}
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={isLoading}
+                    className={clsx(
+                      'w-full py-4 text-white rounded-xl font-bold flex items-center justify-center gap-2 transition-all active:scale-[0.98] disabled:opacity-60 shadow-lg mt-2',
+                      dept.btn
+                    )}
+                  >
+                    {isLoading
+                      ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      : <><ShieldCheck size={18} /> Entrar como Gerência</>
+                    }
+                  </button>
+                </form>
+
+                <p className="text-center text-xs text-slate-600 mt-4">
+                  Senha padrão: <span className="text-slate-400 font-mono">admin123</span>
+                </p>
+              </motion.div>
+            )}
+
+          </AnimatePresence>
         </div>
       </motion.div>
     </div>
-  </div>
   );
 }
