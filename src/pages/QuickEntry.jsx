@@ -362,64 +362,18 @@ export default function QuickEntry() {
             </div>
           )}
 
-          {/* Tara da caixa */}
+          {/* Tara da caixa — só o botão, teclado abre como modal */}
           {phase === 'weight' && (
-            <div className="shrink-0">
-              <button
-                onClick={() => setEditingTara(p => !p)}
-                className={clsx('w-full flex items-center justify-between px-4 py-2.5 rounded-xl border text-xs font-bold transition-all',
-                  editingTara ? 'bg-orange-600/15 border-orange-500/50 text-orange-400' :
-                  taraKg > 0 ? 'bg-orange-600/10 border-orange-500/30 text-orange-400' :
-                  'bg-slate-800/50 border-slate-700 text-slate-500 hover:text-slate-300'
-                )}
-              >
-                <span>📦 Tara da caixa</span>
-                <span className="font-mono">{taraKg > 0 ? `− ${taraKg.toFixed(3)} kg` : 'toque para definir'}</span>
-              </button>
-
-              {editingTara && (
-                <div className="mt-2 bg-slate-900 border border-orange-500/20 rounded-2xl p-3 flex flex-col gap-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs text-orange-400 font-bold uppercase tracking-wider">Peso da caixa vazia (kg)</span>
-                    {taraKg > 0 && (
-                      <button onClick={() => { setTara(''); }} className="text-xs text-red-400 font-bold">Limpar</button>
-                    )}
-                  </div>
-                  <div className="text-right font-mono text-2xl font-black text-orange-400">{tara || '0'} kg</div>
-                  <div className="grid grid-cols-4 gap-1.5">
-                    {[1,2,3,'⌫',4,5,6,'+',7,8,9,'C','.','0','',null].map((k, i) => {
-                      if (k === null) return <div key={i}/>;
-                      return (
-                        <button key={i}
-                          onClick={() => {
-                            if (k === '⌫') setTara(p => p.slice(0,-1));
-                            else if (k === 'C') setTara('');
-                            else if (k === '+') {} // sem soma na tara
-                            else if (k !== '') {
-                              setTara(p => {
-                                if (k === '.' && p.includes('.')) return p;
-                                return p + k;
-                              });
-                            }
-                          }}
-                          className={clsx('py-3 rounded-xl font-bold text-sm transition-all active:scale-95 flex items-center justify-center',
-                            k === '⌫' ? 'bg-slate-800 text-slate-300 border border-slate-700' :
-                            k === 'C' ? 'bg-red-500/10 border border-red-500/30 text-red-400' :
-                            k === '+' ? 'opacity-0 pointer-events-none' :
-                            'bg-slate-800 text-white border border-slate-700'
-                          )}>
-                          {k === '⌫' ? <Delete size={14}/> : k}
-                        </button>
-                      );
-                    })}
-                  </div>
-                  <button onClick={() => setEditingTara(false)}
-                    className="w-full py-2.5 rounded-xl bg-orange-600/20 border border-orange-500/40 text-orange-400 font-bold text-sm active:scale-95">
-                    ✓ Aplicar tara {taraKg > 0 ? `(− ${taraKg.toFixed(3)} kg)` : ''}
-                  </button>
-                </div>
+            <button
+              onClick={() => setEditingTara(true)}
+              className={clsx('w-full flex items-center justify-between px-4 py-2.5 rounded-xl border text-xs font-bold transition-all shrink-0',
+                taraKg > 0 ? 'bg-orange-600/10 border-orange-500/30 text-orange-400' :
+                'bg-slate-800/50 border-slate-700 text-slate-500 hover:text-slate-300'
               )}
-            </div>
+            >
+              <span>📦 Tara da caixa</span>
+              <span className="font-mono">{taraKg > 0 ? `− ${taraKg.toFixed(3)} kg` : 'toque para definir'}</span>
+            </button>
           )}
 
           {/* Teclado numérico */}
@@ -635,6 +589,59 @@ export default function QuickEntry() {
                 {finalizado === 'balanco' ? 'Balanço Finalizado!' : 'Cozinha Finalizada!'}
               </div>
               <div className="text-sm text-slate-400 mt-2">Dados salvos. Acesse o admin para exportar.</div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ── Modal da Tara ────────────────────────────────────────────── */}
+      <AnimatePresence>
+        {editingTara && (
+          <motion.div initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }}
+            transition={{ type: 'spring', damping: 28, stiffness: 300 }}
+            className="fixed inset-0 z-50 flex flex-col justify-end bg-black/50">
+            <div className="bg-slate-900 rounded-t-3xl px-4 pt-4 flex flex-col gap-3"
+              style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 12px) + 12px)' }}>
+              {/* Header */}
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="text-xs text-orange-400 font-extrabold uppercase tracking-widest">📦 Tara da caixa</div>
+                  <div className="text-xs text-slate-500 mt-0.5">Peso da caixa vazia a descontar</div>
+                </div>
+                <button onClick={() => setEditingTara(false)} className="p-1.5 text-slate-500 hover:text-white">
+                  <X size={18} />
+                </button>
+              </div>
+              {/* Display */}
+              <div className="bg-slate-950 border border-orange-500/20 rounded-2xl px-4 py-3 text-right">
+                <div className="font-mono text-3xl font-black text-orange-400">{tara || '0'}<span className="text-base text-slate-500 ml-1">kg</span></div>
+              </div>
+              {/* Teclado 3x4 */}
+              <div className="grid grid-cols-3 gap-2">
+                {[1,2,3,4,5,6,7,8,9].map(n => (
+                  <button key={n} onClick={() => setTara(p => p + n)}
+                    className="bg-slate-800 text-white text-xl font-bold rounded-xl py-3 border border-slate-700 active:scale-95 transition-all">{n}</button>
+                ))}
+                <button onClick={() => setTara(p => { if (p.includes('.')) return p; return p + '.'; })}
+                  className="bg-slate-800 text-white text-xl font-bold rounded-xl py-3 border border-slate-700 active:scale-95 transition-all">.</button>
+                <button onClick={() => setTara(p => p + '0')}
+                  className="bg-slate-800 text-white text-xl font-bold rounded-xl py-3 border border-slate-700 active:scale-95 transition-all">0</button>
+                <button onClick={() => setTara(p => p.slice(0, -1))}
+                  className="bg-slate-800 text-slate-300 rounded-xl py-3 flex items-center justify-center border border-slate-700 active:scale-95 transition-all">
+                  <Delete size={20} />
+                </button>
+              </div>
+              {/* Botões */}
+              <div className="flex gap-2">
+                <button onClick={() => { setTara(''); }}
+                  className="flex-1 py-3 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 font-bold text-sm active:scale-95">
+                  Limpar
+                </button>
+                <button onClick={() => setEditingTara(false)}
+                  className="flex-[2] py-3 rounded-xl bg-orange-600 text-white font-extrabold text-sm active:scale-95 shadow-lg">
+                  ✓ Aplicar{taraKg > 0 ? ` (− ${taraKg.toFixed(3)} kg)` : ''}
+                </button>
+              </div>
             </div>
           </motion.div>
         )}
