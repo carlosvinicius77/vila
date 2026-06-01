@@ -43,6 +43,8 @@ export default function QuickEntry() {
   const [formula, setFormula] = useState('');
   const [location, setLocation] = useState('loja');
   const [mode, setMode] = useState('balanco'); // 'balanco' | 'cozinha'
+  const [tara, setTara] = useState(''); // peso da caixa a descontar
+  const [editingTara, setEditingTara] = useState(false); // teclado de tara aberto
 
   // cfg muda com o modo — cozinha = amarelo, balanço = cor do setor
   const cfg = mode === 'cozinha' ? COZINHA_CFG : deptCfg;
@@ -59,7 +61,9 @@ export default function QuickEntry() {
   const [confirmModal, setConfirmModal] = useState(null); // 'balanco' | 'cozinha'
   const [finalizado, setFinalizado] = useState(null); // 'balanco' | 'cozinha'
 
-  const total = computeTotal(formula);
+  const totalBruto = computeTotal(formula);
+  const taraKg = parseFloat(tara) || 0;
+  const total = Math.max(0, parseFloat((totalBruto - taraKg).toFixed(3)));
   const editTotal = computeTotal(editFormula);
 
   useEffect(() => {
@@ -72,6 +76,8 @@ export default function QuickEntry() {
   const selectProduct = (item) => {
     setFoundProduct(item);
     setFormula('');
+    setTara('');
+    setEditingTara(false);
     setLocation('loja');
     setPhase('weight');
     setShowSearch(false);
@@ -142,7 +148,7 @@ export default function QuickEntry() {
 
     toast.success(`${foundProduct.nome} — ${total.toFixed(3)}kg ✓`);
     setPhase('done');
-    setTimeout(() => { setFoundProduct(null); setCodeBuffer(''); setFormula(''); setPhase('code'); }, 1200);
+    setTimeout(() => { setFoundProduct(null); setCodeBuffer(''); setFormula(''); setTara(''); setEditingTara(false); setPhase('code'); }, 1200);
   };
 
   // ── Editar registro do histórico ──────────────────────────────────────────
@@ -312,6 +318,13 @@ export default function QuickEntry() {
             <div className="text-right font-mono text-slate-500 text-xs min-h-[14px]">
               {phase === 'weight' && formula}
             </div>
+            {/* Tara aplicada */}
+            {phase === 'weight' && taraKg > 0 && (
+              <div className="flex justify-between items-center text-xs mt-0.5">
+                <span className="text-orange-400 font-bold">− Tara caixa: {taraKg.toFixed(3)} kg</span>
+                <span className="text-slate-500 font-mono">Bruto: {totalBruto.toFixed(3)}</span>
+              </div>
+            )}
             <div className="text-right">
               {phase === 'code' && (
                 <span className="text-5xl font-black text-white tracking-widest">
@@ -344,6 +357,66 @@ export default function QuickEntry() {
                 className={clsx('flex-1 py-2 rounded-lg text-sm font-bold transition-all', location === 'camara' ? `${cfg.btn} text-white shadow` : 'text-slate-400')}>
                 🧊 Câmara
               </button>
+            </div>
+          )}
+
+          {/* Tara da caixa */}
+          {phase === 'weight' && (
+            <div className="shrink-0">
+              <button
+                onClick={() => setEditingTara(p => !p)}
+                className={clsx('w-full flex items-center justify-between px-4 py-2.5 rounded-xl border text-xs font-bold transition-all',
+                  editingTara ? 'bg-orange-600/15 border-orange-500/50 text-orange-400' :
+                  taraKg > 0 ? 'bg-orange-600/10 border-orange-500/30 text-orange-400' :
+                  'bg-slate-800/50 border-slate-700 text-slate-500 hover:text-slate-300'
+                )}
+              >
+                <span>📦 Tara da caixa</span>
+                <span className="font-mono">{taraKg > 0 ? `− ${taraKg.toFixed(3)} kg` : 'toque para definir'}</span>
+              </button>
+
+              {editingTara && (
+                <div className="mt-2 bg-slate-900 border border-orange-500/20 rounded-2xl p-3 flex flex-col gap-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs text-orange-400 font-bold uppercase tracking-wider">Peso da caixa vazia (kg)</span>
+                    {taraKg > 0 && (
+                      <button onClick={() => { setTara(''); }} className="text-xs text-red-400 font-bold">Limpar</button>
+                    )}
+                  </div>
+                  <div className="text-right font-mono text-2xl font-black text-orange-400">{tara || '0'} kg</div>
+                  <div className="grid grid-cols-4 gap-1.5">
+                    {[1,2,3,'⌫',4,5,6,'+',7,8,9,'C','.','0','',null].map((k, i) => {
+                      if (k === null) return <div key={i}/>;
+                      return (
+                        <button key={i}
+                          onClick={() => {
+                            if (k === '⌫') setTara(p => p.slice(0,-1));
+                            else if (k === 'C') setTara('');
+                            else if (k === '+') {} // sem soma na tara
+                            else if (k !== '') {
+                              setTara(p => {
+                                if (k === '.' && p.includes('.')) return p;
+                                return p + k;
+                              });
+                            }
+                          }}
+                          className={clsx('py-3 rounded-xl font-bold text-sm transition-all active:scale-95 flex items-center justify-center',
+                            k === '⌫' ? 'bg-slate-800 text-slate-300 border border-slate-700' :
+                            k === 'C' ? 'bg-red-500/10 border border-red-500/30 text-red-400' :
+                            k === '+' ? 'opacity-0 pointer-events-none' :
+                            'bg-slate-800 text-white border border-slate-700'
+                          )}>
+                          {k === '⌫' ? <Delete size={14}/> : k}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <button onClick={() => setEditingTara(false)}
+                    className="w-full py-2.5 rounded-xl bg-orange-600/20 border border-orange-500/40 text-orange-400 font-bold text-sm active:scale-95">
+                    ✓ Aplicar tara {taraKg > 0 ? `(− ${taraKg.toFixed(3)} kg)` : ''}
+                  </button>
+                </div>
+              )}
             </div>
           )}
 
