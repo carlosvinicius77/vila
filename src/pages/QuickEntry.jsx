@@ -201,20 +201,21 @@ export default function QuickEntry() {
       <Toaster position="top-center" richColors theme="dark" />
 
       {/* ── Header ────────────────────────────────────────────────────── */}
+      {/* Linha 1: logo + ícones */}
       <div className="flex items-center gap-2 px-3 py-2.5 border-b border-slate-800 bg-slate-900/95 shrink-0">
-        <span className="text-lg">{cfg.emoji}</span>
-        <span className={clsx('font-extrabold text-sm', cfg.text)}>{cfg.label}</span>
+        <span className="text-lg">{deptCfg.emoji}</span>
+        <span className={clsx('font-extrabold text-sm', deptCfg.text)}>{deptCfg.label}</span>
         <div className="flex-1" />
 
-        {/* Lupa — busca por nome */}
+        {/* Lupa */}
         <button onClick={() => { setShowSearch(p => !p); setTab('teclado'); }}
           className="p-2 text-slate-400 hover:text-white transition-colors">
           <Search size={19} />
         </button>
 
-        {/* Histórico — ao lado da lupa */}
+        {/* Histórico */}
         <button onClick={() => setTab(p => p === 'historico' ? 'teclado' : 'historico')}
-          className={clsx('relative p-2 transition-colors', tab === 'historico' ? cfg.text : 'text-slate-400 hover:text-white')}>
+          className={clsx('relative p-2 transition-colors', tab === 'historico' ? deptCfg.text : 'text-slate-400 hover:text-white')}>
           <ClipboardList size={19} />
           {sessionLog.length > 0 && (
             <span className="absolute top-1 right-1 w-3.5 h-3.5 bg-blue-500 rounded-full text-[8px] font-black text-white flex items-center justify-center leading-none">
@@ -223,26 +224,26 @@ export default function QuickEntry() {
           )}
         </button>
 
-        {/* Balanço */}
-        <button onClick={() => setMode('balanco')}
-          className={clsx('flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-extrabold transition-all',
-            mode === 'balanco' ? `${cfg.btn} text-white shadow-lg` : 'bg-slate-800 text-slate-400'
-          )}>
-          <Scale size={13} /> Balanço
-        </button>
-
-        {/* Cozinha */}
-        <button onClick={() => setMode('cozinha')}
-          className={clsx('flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-extrabold transition-all',
-            mode === 'cozinha' ? 'bg-amber-600 hover:bg-amber-500 text-white shadow-lg' : 'bg-slate-800 text-slate-400'
-          )}>
-          <ChefHat size={13} /> Cozinha
-        </button>
-
         {/* Sair */}
         <button onClick={() => { localStorage.removeItem('@acougue/isAuthenticated'); localStorage.removeItem('@acougue/role'); navigate('/', { replace: true }); }}
           className="p-2 text-slate-500 hover:text-red-400 transition-colors">
           <LogOut size={19} />
+        </button>
+      </div>
+
+      {/* Linha 2: Balanço / Cozinha */}
+      <div className="flex gap-2 px-3 py-2 bg-slate-900/80 border-b border-slate-800 shrink-0">
+        <button onClick={() => setMode('balanco')}
+          className={clsx('flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl font-extrabold text-sm transition-all active:scale-95',
+            mode === 'balanco' ? `${deptCfg.btn} text-white shadow-lg` : 'bg-slate-800 text-slate-400'
+          )}>
+          <Scale size={15} /> Balanço
+        </button>
+        <button onClick={() => setMode('cozinha')}
+          className={clsx('flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl font-extrabold text-sm transition-all active:scale-95',
+            mode === 'cozinha' ? 'bg-amber-600 hover:bg-amber-500 text-white shadow-lg' : 'bg-slate-800 text-slate-400'
+          )}>
+          <ChefHat size={15} /> Cozinha
         </button>
       </div>
 
