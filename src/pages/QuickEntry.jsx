@@ -197,7 +197,7 @@ export default function QuickEntry() {
   };
 
   return (
-    <div className="h-screen bg-slate-950 flex flex-col select-none overflow-hidden">
+    <div className="bg-slate-950 flex flex-col select-none" style={{ height: '100dvh', maxHeight: '-webkit-fill-available' }}>
       <Toaster position="top-center" richColors theme="dark" />
 
       {/* ── Header ────────────────────────────────────────────────────── */}
@@ -292,7 +292,7 @@ export default function QuickEntry() {
 
       {/* ── ABA: TECLADO ──────────────────────────────────────────────── */}
       {tab === 'teclado' && (
-        <div className="flex-1 flex flex-col px-4 pt-4 pb-3 gap-3 overflow-hidden">
+        <div className="flex-1 flex flex-col px-3 pt-3 pb-2 gap-2 overflow-y-auto">
 
           {/* Produto selecionado */}
           <AnimatePresence>
@@ -328,20 +328,20 @@ export default function QuickEntry() {
             )}
             <div className="text-right">
               {phase === 'code' && (
-                <span className="text-5xl font-black text-white tracking-widest">
+                <span className="text-4xl font-black text-white tracking-widest">
                   {codeBuffer || <span className="text-slate-700">_ _ _ _</span>}
                 </span>
               )}
               {phase === 'weight' && (
                 <div className="flex items-baseline justify-end gap-2">
-                  <span className={clsx('text-5xl font-black tracking-tighter', cfg.text)}>{total.toFixed(3)}</span>
-                  <span className="text-lg font-bold text-slate-500">kg</span>
+                  <span className={clsx('text-4xl font-black tracking-tighter', cfg.text)}>{total.toFixed(3)}</span>
+                  <span className="text-base font-bold text-slate-500">kg</span>
                 </div>
               )}
               {phase === 'done' && (
                 <div className="flex items-center justify-end gap-3 py-1">
-                  <Check size={32} className={cfg.text} strokeWidth={3} />
-                  <span className={clsx('text-4xl font-black', cfg.text)}>{total.toFixed(3)} kg</span>
+                  <Check size={28} className={cfg.text} strokeWidth={3} />
+                  <span className={clsx('text-3xl font-black', cfg.text)}>{total.toFixed(3)} kg</span>
                 </div>
               )}
             </div>
@@ -423,38 +423,37 @@ export default function QuickEntry() {
 
           {/* Teclado numérico */}
           {phase !== 'done' && (
-            <div className="grid grid-cols-3 gap-2.5 flex-1">
+            <div className="grid grid-cols-3 gap-2">
               {[1,2,3,4,5,6,7,8,9].map(n => (
                 <button key={n} onClick={() => pressKey(String(n))}
-                  className="bg-slate-800 hover:bg-slate-700 active:scale-95 text-white text-3xl font-bold rounded-2xl border border-slate-700 transition-all">
+                  className="bg-slate-800 hover:bg-slate-700 active:scale-95 text-white text-2xl font-bold rounded-xl py-4 border border-slate-700 transition-all">
                   {n}
                 </button>
               ))}
               {phase === 'code' ? (
                 <>
-                  <button onClick={() => pressKey('C')} className="bg-red-500/10 border border-red-500/30 text-red-400 font-bold rounded-2xl text-sm active:scale-95 transition-all">Limpar</button>
-                  <button onClick={() => pressKey('0')} className="bg-slate-800 hover:bg-slate-700 active:scale-95 text-white text-3xl font-bold rounded-2xl border border-slate-700 transition-all">0</button>
-                  <button onClick={() => pressKey('DEL')} className="bg-slate-800 active:scale-95 text-slate-300 rounded-2xl flex items-center justify-center border border-slate-700 transition-all"><Delete size={24} /></button>
+                  <button onClick={() => pressKey('C')} className="bg-red-500/10 border border-red-500/30 text-red-400 font-bold rounded-xl py-4 text-sm active:scale-95 transition-all">Limpar</button>
+                  <button onClick={() => pressKey('0')} className="bg-slate-800 hover:bg-slate-700 active:scale-95 text-white text-2xl font-bold rounded-xl py-4 border border-slate-700 transition-all">0</button>
+                  <button onClick={() => pressKey('DEL')} className="bg-slate-800 active:scale-95 text-slate-300 rounded-xl py-4 flex items-center justify-center border border-slate-700 transition-all"><Delete size={20} /></button>
                 </>
               ) : (
                 <>
-                  <button onClick={() => pressKey('+')} className={clsx('font-black text-3xl rounded-2xl border active:scale-95 transition-all', cfg.bg, cfg.border, cfg.text)}>+</button>
-                  <button onClick={() => pressKey('0')} className="bg-slate-800 hover:bg-slate-700 active:scale-95 text-white text-3xl font-bold rounded-2xl border border-slate-700 transition-all">0</button>
-                  <button onClick={() => pressKey('.')} className="bg-slate-800 hover:bg-slate-700 active:scale-95 text-white text-3xl font-bold rounded-2xl border border-slate-700 transition-all">.</button>
-                  {/* Linha extra: apagar e limpar */}
-                  <button onClick={() => pressKey('DEL')} className="bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-300 rounded-2xl border border-slate-700 transition-all flex items-center justify-center">
-                    <Delete size={24} />
+                  <button onClick={() => pressKey('+')} className={clsx('font-black text-2xl rounded-xl py-4 border active:scale-95 transition-all', cfg.bg, cfg.border, cfg.text)}>+</button>
+                  <button onClick={() => pressKey('0')} className="bg-slate-800 hover:bg-slate-700 active:scale-95 text-white text-2xl font-bold rounded-xl py-4 border border-slate-700 transition-all">0</button>
+                  <button onClick={() => pressKey('.')} className="bg-slate-800 hover:bg-slate-700 active:scale-95 text-white text-2xl font-bold rounded-xl py-4 border border-slate-700 transition-all">.</button>
+                  <button onClick={() => pressKey('DEL')} className="bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-300 rounded-xl py-4 flex items-center justify-center border border-slate-700 transition-all">
+                    <Delete size={20} />
                   </button>
-                  <button onClick={() => pressKey('C')} className="col-span-2 bg-red-500/10 border border-red-500/30 text-red-400 font-bold rounded-2xl text-sm active:scale-95 transition-all">
+                  <button onClick={() => pressKey('C')} className="col-span-2 bg-red-500/10 border border-red-500/30 text-red-400 font-bold rounded-xl py-4 text-sm active:scale-95 transition-all">
                     Limpar tudo
                   </button>
                 </>
               )}
               <button onClick={() => pressKey('OK')}
-                className={clsx('col-span-3 rounded-2xl font-extrabold text-white text-xl flex items-center justify-center gap-3 shadow-lg transition-all active:scale-[0.98]', cfg.btn)}>
-                {phase === 'code'                          && <><Search size={20} /> Buscar Produto</>}
-                {phase === 'weight' && mode === 'balanco'  && <><Check size={22} strokeWidth={3} /> Confirmar Pesagem</>}
-                {phase === 'weight' && mode === 'cozinha'  && <><ChefHat size={20} /> Confirmar Cozinha</>}
+                className={clsx('col-span-3 py-4 rounded-xl font-extrabold text-white text-lg flex items-center justify-center gap-3 shadow-lg transition-all active:scale-[0.98]', cfg.btn)}>
+                {phase === 'code'                          && <><Search size={18} /> Buscar Produto</>}
+                {phase === 'weight' && mode === 'balanco'  && <><Check size={20} strokeWidth={3} /> Confirmar Pesagem</>}
+                {phase === 'weight' && mode === 'cozinha'  && <><ChefHat size={18} /> Confirmar Cozinha</>}
               </button>
             </div>
           )}
