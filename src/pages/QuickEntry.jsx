@@ -197,7 +197,7 @@ export default function QuickEntry() {
   };
 
   return (
-    <div className="bg-slate-950 flex flex-col select-none" style={{ height: '100dvh', maxHeight: '-webkit-fill-available' }}>
+    <div className="bg-slate-950 flex flex-col select-none" style={{ height: '100svh' }}>
       <Toaster position="top-center" richColors theme="dark" />
 
       {/* ── Header ────────────────────────────────────────────────────── */}
@@ -292,7 +292,8 @@ export default function QuickEntry() {
 
       {/* ── ABA: TECLADO ──────────────────────────────────────────────── */}
       {tab === 'teclado' && (
-        <div className="flex-1 flex flex-col px-3 pt-2 gap-2 overflow-y-auto" style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 80px)' }}>
+        <div className="flex-1 flex flex-col overflow-hidden">
+        <div className="flex-1 flex flex-col px-3 pt-2 gap-2 overflow-y-auto pb-2">
 
           {/* Produto selecionado */}
           <AnimatePresence>
@@ -449,14 +450,21 @@ export default function QuickEntry() {
                   </button>
                 </>
               )}
-              <button onClick={() => pressKey('OK')}
-                className={clsx('col-span-3 py-4 rounded-xl font-extrabold text-white text-lg flex items-center justify-center gap-3 shadow-lg transition-all active:scale-[0.98]', cfg.btn)}>
-                {phase === 'code'                          && <><Search size={18} /> Buscar Produto</>}
-                {phase === 'weight' && mode === 'balanco'  && <><Check size={20} strokeWidth={3} /> Confirmar Pesagem</>}
-                {phase === 'weight' && mode === 'cozinha'  && <><ChefHat size={18} /> Confirmar Cozinha</>}
-              </button>
             </div>
           )}
+        </div>
+
+        {/* Botão OK — fixo no rodapé, sempre visível */}
+        {phase !== 'done' && (
+          <div className="px-3 pb-3 shrink-0 bg-slate-950" style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 12px) + 12px)' }}>
+            <button onClick={() => pressKey('OK')}
+              className={clsx('w-full py-4 rounded-xl font-extrabold text-white text-lg flex items-center justify-center gap-3 shadow-lg transition-all active:scale-[0.98]', cfg.btn)}>
+              {phase === 'code'                         && <><Search size={18} /> Buscar Produto</>}
+              {phase === 'weight' && mode === 'balanco' && <><Check size={20} strokeWidth={3} /> Confirmar Pesagem</>}
+              {phase === 'weight' && mode === 'cozinha' && <><ChefHat size={18} /> Confirmar Cozinha</>}
+            </button>
+          </div>
+        )}
         </div>
       )}
 
